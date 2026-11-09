@@ -1,6 +1,6 @@
-# ChemPharm Hub
+# OrgânicaLab
 
-Laboratório virtual de Química Orgânica para estudantes de Farmácia: jogos com moléculas 3D reais (PubChem) onde a geometria muda a química, e fórmulas em bastão IUPAC onde elas bastam.
+Laboratório virtual de Química Orgânica para estudantes de Farmácia e cursos afins: jogos com moléculas 3D reais (PubChem) onde a geometria muda a química, e fórmulas em bastão IUPAC onde elas bastam.
 
 ## Como rodar
 
@@ -70,3 +70,10 @@ python scripts/build3d.py src/data/molecules3d.ts
 ```
 
 Para adicionar uma molécula, inclua uma linha na lista `MOLS` do script (chave, nome, CID do PubChem, SMILES isomérico).
+
+## Créditos
+
+Idealizado e desenvolvido por [Giorgio Bazet](https://www.linkedin.com/in/giorgio-bazet/).
+Consultoria: Rafaella Costa.
+
+O nome, a marca e os créditos ficam em `src/config/site.ts`.

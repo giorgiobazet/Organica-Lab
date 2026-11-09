@@ -1,6 +1,11 @@
-# ChemPharm Hub — Regras do Projeto
+# OrgânicaLab — Regras do Projeto
 
-Plataforma educacional de Química Orgânica para estudantes de Farmácia.
+Plataforma educacional de Química Orgânica (Farmácia e cursos afins). Idealizado e desenvolvido por Giorgio Bazet; consultoria de Rafaella Costa.
+
+- **Identidade** (nome, marca, autoria, créditos): só em `src/config/site.ts`. Não escreva o nome do projeto em outros arquivos.
+- **Visual**: estilo "Orbital" — tokens semânticos (`--bg`, `--surface`, `--border`, `--text`, `--muted`, `--hero`, `--viewer`) em `src/app/globals.css`, versões clara e escura; use as classes `ui-*`, `glass`, `text-muted`, `btn-primary`, `titulo-marca` em vez de cores fixas.
+- **Rodapé** (`<Rodape/>`): assinatura do autor no login, no Hub e nas disciplinas.
+
 Stack: Next.js 15 (App Router) + TypeScript + Tailwind CSS 3 + Framer Motion + Lucide + Recharts + 3Dmol.js + smiles-drawer + Firebase.
 
 ## Comandos

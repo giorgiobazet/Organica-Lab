@@ -133,7 +133,7 @@ export default function DeckbuilderAromaticos() {
         {/* Alvo + histórico (2D) */}
         <div className="glass space-y-3 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Alvo da síntese</p>
-          <div className="flex justify-center rounded-xl bg-white/50 dark:bg-lab-background/40">
+          <div className="flex justify-center rounded-xl bg-white/50 dark:bg-ui-bg/40">
             <Molecule2DStick smiles={smilesDe(alvo.anel)} width={260} height={160} explicitHydrogens={false} />
           </div>
           <div>

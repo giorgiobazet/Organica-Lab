@@ -1,5 +1,6 @@
 "use client";
 
+import { SITE } from "@/config/site";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FlaskConical, LogOut, Moon, Sun } from "lucide-react";
@@ -22,7 +23,7 @@ export function LabHeader() {
             <FlaskConical className="h-5 w-5" />
           </span>
           <span className="text-lg font-bold tracking-tight">
-            ChemPharm <span className="text-chem-primary">Hub</span>
+            {SITE.marca.base}<span className="titulo-marca text-chem-primary">{SITE.marca.destaque}</span>
           </span>
           {mode === "dev" && (
             <span className="chip bg-chem-orbital/15 text-chem-orbital" title="Firebase não configurado: dados salvos neste navegador">

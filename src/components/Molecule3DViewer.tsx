@@ -8,7 +8,7 @@ import { MOLECULES_3D, getCachedByCid } from "@/data/molecules3d";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/ThemeContext";
 
-/** Fundo opaco do visualizador: token --viewer do estilo/tema ativo (halos translúcidos precisam de fundo opaco). */
+/** Fundo opaco do visualizador: token --viewer do tema ativo (halos translúcidos precisam de fundo opaco). */
 function fundoOpaco(): string {
   if (typeof window === "undefined") return "#141C2C";
   return getComputedStyle(document.documentElement).getPropertyValue("--viewer").trim() || "#141C2C";
@@ -164,7 +164,7 @@ export function Molecule3DViewer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasModel = useRef(false);
-  const { theme, estilo } = useTheme();
+  const { theme } = useTheme();
   const highlightRef = useRef<AtomHighlight[] | undefined>(highlight);
   highlightRef.current = highlight;
   const labelsRef = useRef<AtomLabel[] | undefined>(labels);
@@ -205,7 +205,7 @@ export function Molecule3DViewer({
     if (!ready || transparent || !viewerRef.current) return;
     viewerRef.current.setBackgroundColor(fundoOpaco(), 1);
     viewerRef.current.render();
-  }, [ready, transparent, theme, estilo]);
+  }, [ready, transparent, theme]);
 
   // Carrega a molécula: SDF explícito > cache local instantâneo > PubChem (substitui o cache).
   useEffect(() => {

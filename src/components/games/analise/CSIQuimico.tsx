@@ -396,7 +396,7 @@ function EspectroH1({ caso, onCarimbar }: { caso: CasoCSI; onCarimbar: (e: Evide
     <div>
       <p className="mb-1 text-sm font-semibold">RMN de ¹H (400 MHz, CDCl₃) · intensidade × δ (ppm)</p>
       <p className="mb-2 text-xs text-muted">Clique em cada sinal: o desdobramento n + 1 e a integração (número de H) aparecem no quadro.</p>
-      <svg viewBox={`0 0 ${W} ${H + 30}`} className="w-full rounded-lg bg-white/40 dark:bg-lab-background/40" role="img" aria-label="Espectro de RMN de hidrogênio">
+      <svg viewBox={`0 0 ${W} ${H + 30}`} className="w-full rounded-lg bg-white/40 dark:bg-ui-bg/40" role="img" aria-label="Espectro de RMN de hidrogênio">
         <line x1={30} y1={H} x2={W - 30} y2={H} stroke="#94A3B8" />
         {Array.from({ length: dMax + 1 }, (_, i) => dMax - i).map((d) => (
           <g key={d}>
@@ -466,7 +466,7 @@ function EspectroC13({ caso, onCarimbar }: { caso: CasoCSI; onCarimbar: (e: Evid
     <div>
       <p className="mb-1 text-sm font-semibold">RMN de ¹³C desacoplado (100 MHz, CDCl₃) · δ de 220 a 0 ppm</p>
       <p className="mb-2 text-xs text-muted">Cada linha é um carbono quimicamente diferente. Clique para carimbar.</p>
-      <svg viewBox={`0 0 ${W} ${H + 30}`} className="w-full rounded-lg bg-white/40 dark:bg-lab-background/40" role="img" aria-label="Espectro de RMN de carbono 13">
+      <svg viewBox={`0 0 ${W} ${H + 30}`} className="w-full rounded-lg bg-white/40 dark:bg-ui-bg/40" role="img" aria-label="Espectro de RMN de carbono 13">
         {regioes.map((r) => (
           <g key={r.rotulo}>
             <rect x={xDe(r.de)} y={10} width={xDe(r.ate) - xDe(r.de)} height={H - 10} fill={r.cor} />

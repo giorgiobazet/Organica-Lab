@@ -25,7 +25,7 @@ export interface Molecule2DStickProps {
 const LAB_THEMES = {
   labDark: {
     FOREGROUND: "#F8FAFC",
-    BACKGROUND: "#1E293B",
+    BACKGROUND: "#1E1B3E",
     C: "#F8FAFC",
     O: "#F43F5E",
     N: "#06B6D4",

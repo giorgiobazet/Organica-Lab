@@ -74,7 +74,7 @@ export default function GruposFuncionais() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-xl bg-slate-200/60 p-1 dark:bg-lab-background/60" role="tablist">
+        <div className="inline-flex rounded-xl bg-slate-200/60 p-1 dark:bg-ui-bg/60" role="tablist">
           {(
             [
               ["nomenclatura", `Grupos e nomenclatura · ${nomeFeitos.length}/${QUESTOES_NOMENCLATURA.length}`],

@@ -1,5 +1,5 @@
 /**
- * Camada de autenticação e perfil do ChemPharm Hub.
+ * Camada de autenticação e perfil do OrgânicaLab.
  *
  * Modo Híbrido Resiliente:
  *  - "firebase": usa o SDK oficial quando as variáveis NEXT_PUBLIC_FIREBASE_* estão no .env.local.
@@ -319,7 +319,7 @@ class DevBackend implements AuthBackend {
     profiles[uid] = PERFIL_INICIAL(input);
     lsWrite(LS_PROFILES, profiles);
     lsWrite(LS_SESSION, uid);
-    console.info(`[ChemPharm Modo Dev] E-mail de verificação "enviado" para ${email}.`);
+    console.info(`[OrgânicaLab Modo Dev] E-mail de verificação "enviado" para ${email}.`);
     this.emit();
     return this.toAppUser(rec);
   }
@@ -342,7 +342,7 @@ class DevBackend implements AuthBackend {
   async resendVerification() {
     const rec = this.current();
     if (!rec) throw new AuthError("auth/no-user", "Nenhum usuário conectado.");
-    console.info(`[ChemPharm Modo Dev] E-mail de verificação reenviado para ${rec.email}.`);
+    console.info(`[OrgânicaLab Modo Dev] E-mail de verificação reenviado para ${rec.email}.`);
   }
 
   async reloadUser() {

@@ -4,82 +4,13 @@
 
 /*
  * Tokens semânticos de interface (valores "R G B" para aceitar opacidade no Tailwind).
- * A paleta oficial (lab.* e chem.*) continua valendo para acentos; estes tokens definem
- * fundo, superfícies, bordas e texto de cada estilo, no modo claro e no escuro.
- *
- * Estilos (atributo data-estilo no <html>):
- *   a = Lab Glass  (vidro translúcido, brilhos ciano/violeta)
- *   b = Clínico    (superfícies sólidas, bordas finas, sóbrio)
- *   c = Orbital    (gradientes violeta/ciano, vibrante)
+ * Estilo "Orbital": gradientes ciano → violeta sobre a paleta oficial (lab.* e chem.*),
+ * com versões clara e escura. Fundo, superfícies, bordas, texto, painel do login (hero)
+ * e fundo do visualizador 3D saem daqui.
  */
 @layer base {
-  :root,
-  [data-estilo="a"] {
+  :root {
     color-scheme: light;
-    --bg: 241 245 249;
-    --bg-image: radial-gradient(circle at 12% -10%, rgba(6, 182, 212, 0.14), transparent 42%),
-      radial-gradient(circle at 92% 0%, rgba(139, 92, 246, 0.12), transparent 40%);
-    --surface: 255 255 255;
-    --surface-a: 0.72;
-    --border: 148 163 184;
-    --border-a: 0.35;
-    --text: 15 23 42;
-    --muted: 100 116 139;
-    --hero: 226 236 246;
-    --viewer: #e6edf5;
-    --blur: 14px;
-    --radius: 1rem;
-    --shadow: 0 12px 32px -16px rgba(15, 23, 42, 0.22);
-    --grid: rgba(15, 23, 42, 0.05);
-  }
-  .dark,
-  [data-estilo="a"].dark {
-    color-scheme: dark;
-    --bg: 11 15 25;
-    --bg-image: radial-gradient(circle at 12% -10%, rgba(6, 182, 212, 0.16), transparent 42%),
-      radial-gradient(circle at 92% 0%, rgba(139, 92, 246, 0.16), transparent 40%);
-    --surface: 30 41 59;
-    --surface-a: 0.7;
-    --border: 255 255 255;
-    --border-a: 0.08;
-    --text: 248 250 252;
-    --muted: 148 163 184;
-    --hero: 11 15 25;
-    --viewer: #141c2c;
-    --shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.65);
-    --grid: rgba(148, 163, 184, 0.07);
-  }
-
-  [data-estilo="b"] {
-    --bg: 248 250 252;
-    --bg-image: none;
-    --surface: 255 255 255;
-    --surface-a: 1;
-    --border: 226 232 240;
-    --border-a: 1;
-    --text: 15 23 42;
-    --muted: 100 116 139;
-    --hero: 240 249 255;
-    --viewer: #f1f5f9;
-    --blur: 0px;
-    --radius: 0.75rem;
-    --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.07);
-    --grid: transparent;
-  }
-  [data-estilo="b"].dark {
-    --bg: 15 23 42;
-    --surface: 30 41 59;
-    --surface-a: 1;
-    --border: 51 65 85;
-    --border-a: 1;
-    --text: 241 245 249;
-    --muted: 148 163 184;
-    --hero: 15 23 42;
-    --viewer: #1a2537;
-    --shadow: none;
-  }
-
-  [data-estilo="c"] {
     --bg: 245 243 255;
     --bg-image: radial-gradient(circle at 0% 0%, rgba(6, 182, 212, 0.18), transparent 45%),
       radial-gradient(circle at 100% 20%, rgba(139, 92, 246, 0.22), transparent 45%),
@@ -97,7 +28,8 @@
     --shadow: 0 14px 36px -16px rgba(139, 92, 246, 0.35);
     --grid: rgba(139, 92, 246, 0.07);
   }
-  [data-estilo="c"].dark {
+  .dark {
+    color-scheme: dark;
     --bg: 12 10 30;
     --bg-image: radial-gradient(circle at 0% 0%, rgba(6, 182, 212, 0.16), transparent 45%),
       radial-gradient(circle at 100% 15%, rgba(139, 92, 246, 0.28), transparent 45%),
@@ -179,34 +111,23 @@
   }
 }
 
-/* ---------- Diferenças de linguagem visual entre os estilos ---------- */
+/* ---------- Linguagem visual Orbital ---------- */
 @layer components {
-  /* B · Clínico: sem brilhos decorativos nem tintas de gradiente */
-  [data-estilo="b"] .decor {
-    display: none;
-  }
-  [data-estilo="b"] .tinta {
-    background-image: none;
-  }
-  [data-estilo="b"] .btn-primary:hover {
-    box-shadow: none;
-  }
-
-  /* C · Orbital: gradiente ciano → violeta nos botões e brilho violeta nos painéis */
-  [data-estilo="c"] .btn-primary {
+  /* Gradiente ciano → violeta nos botões principais e nos títulos de marca */
+  .btn-primary {
     background-image: linear-gradient(120deg, #06b6d4, #8b5cf6);
     color: #fff;
   }
-  [data-estilo="c"] .btn-primary:hover {
+  .btn-primary:hover {
     box-shadow: 0 0 32px -6px rgba(139, 92, 246, 0.7);
   }
-  [data-estilo="c"] .glass:hover {
+  .glass:hover {
     border-color: rgb(var(--border) / calc(var(--border-a) + 0.2));
   }
-  [data-estilo="c"] .titulo-marca {
+  .titulo-marca {
     background-image: linear-gradient(120deg, #06b6d4, #8b5cf6);
     -webkit-background-clip: text;
     background-clip: text;
-    color: transparent;
+    -webkit-text-fill-color: transparent;
   }
 }

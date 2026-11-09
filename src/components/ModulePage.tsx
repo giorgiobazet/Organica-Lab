@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, CheckCircle2, Eye, Gamepad2, LayoutGrid, Lock, Play } from "lucide-react";
 import { LabHeader } from "@/components/LabHeader";
+import { Rodape } from "@/components/Rodape";
 import { Molecule2DStick } from "@/components/Molecule2DStick";
 import { Molecule3DViewer } from "@/components/Molecule3DViewer";
 import { RequireVerified } from "@/components/RequireVerified";
@@ -127,6 +128,7 @@ function ModuleContent({ id }: { id: DisciplinaId }) {
           <VisaoGeral d={d} concluidos={concluidos} onJogar={abrir} />
         )}
       </div>
+      <Rodape className="mt-10" />
     </main>
   );
 }

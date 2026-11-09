@@ -15,7 +15,7 @@ export function AuthCard() {
 
   return (
     <div className="glass-strong w-full max-w-md p-6 sm:p-8">
-      <div className="mb-6 grid grid-cols-2 gap-1 rounded-xl bg-slate-200/60 p-1 dark:bg-lab-background/60" role="tablist">
+      <div className="mb-6 grid grid-cols-2 gap-1 rounded-xl bg-slate-200/60 p-1 dark:bg-ui-bg/60" role="tablist">
         {(["login", "cadastro"] as const).map((t) => (
           <button
             key={t}

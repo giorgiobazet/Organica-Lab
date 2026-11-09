@@ -11,6 +11,8 @@ import { useAuth } from "@/context/AuthContext";
 import { DISCIPLINAS, type Disciplina } from "@/data/chemistryData";
 import { nivelDoXp } from "@/lib/validation";
 import { cn } from "@/lib/utils";
+import { SITE } from "@/config/site";
+import { Rodape } from "@/components/Rodape";
 
 const TOTAL_JOGOS = DISCIPLINAS.reduce((n, d) => n + d.jogos.length, 0);
 
@@ -54,7 +56,7 @@ function HubContent() {
               <Sparkles className="h-3.5 w-3.5" /> Laboratório virtual de Química Orgânica
             </p>
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Bem-vindo(a) ao <span className="titulo-marca text-chem-primary">ChemPharm Hub</span>, {primeiroNome}.
+              Bem-vindo(a) ao <span className="titulo-marca text-chem-primary">{SITE.nome}</span>, {primeiroNome}.
             </h1>
             <p className="mt-3 max-w-xl text-muted">
               Quatro disciplinas, jogos com moléculas reais do PubChem e uma regra simples: 3D onde a geometria muda a
@@ -93,6 +95,7 @@ function HubContent() {
           ))}
         </div>
       </section>
+      <Rodape className="mt-10" />
     </main>
   );
 }
@@ -156,7 +159,7 @@ function DisciplinaCard({ d, span, delay, concluidos }: { d: Disciplina; span: s
             </span>
           </div>
         </div>
-        <div className={cn("relative flex shrink-0 items-center justify-center rounded-xl bg-white/50 dark:bg-lab-background/40", wide ? "sm:w-[260px]" : "")}>
+        <div className={cn("relative flex shrink-0 items-center justify-center rounded-xl bg-white/50 dark:bg-ui-bg/40", wide ? "sm:w-[260px]" : "")}>
           <Molecule2DStick smiles={d.destaque.smiles} width={wide ? 240 : 220} height={140} explicitHydrogens={false} label={d.destaque.nome} />
         </div>
       </Link>

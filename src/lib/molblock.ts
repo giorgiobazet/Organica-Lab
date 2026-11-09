@@ -10,7 +10,7 @@ export function toMolBlock(
   if (coords.length !== n * 3) throw new Error(`Esperava ${n * 3} coordenadas, recebi ${coords.length}`);
   const f = (x: number) => x.toFixed(4).padStart(10);
   const i3 = (x: number) => String(x).padStart(3);
-  const lines = [nome, "  ChemPharm         3D", ""];
+  const lines = [nome, "  OrganicaLab       3D", ""];
   lines.push(`${i3(n)}${i3(ligacoes.length)}  0  0  0  0  0  0  0  0999 V2000`);
   for (let i = 0; i < n; i++) {
     const el = elementos[i].padEnd(3);

@@ -138,7 +138,7 @@ function PainelAlvo({ alvo, jaFeito, onFeito, onProximo }: { alvo: AlvoBisturi; 
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Molécula-alvo</p>
           <p className="font-semibold">{alvo.nome}</p>
           <p className="text-xs text-muted">{alvo.uso}</p>
-          <div className="my-2 flex flex-1 items-center justify-center rounded-xl bg-white/50 dark:bg-lab-background/40">
+          <div className="my-2 flex flex-1 items-center justify-center rounded-xl bg-white/50 dark:bg-ui-bg/40">
             <Molecule2DStick smiles={smiles2d} width={360} height={200} explicitHydrogens={false} highlightAtoms={destaque} />
           </div>
           {fase === "corte" ? (

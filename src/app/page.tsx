@@ -11,6 +11,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { MOLECULES_3D } from "@/data/molecules3d";
 import { cn } from "@/lib/utils";
+import { SITE } from "@/config/site";
+import { Rodape } from "@/components/Rodape";
 
 const DESTAQUES = [
   {
@@ -53,7 +55,7 @@ export default function Home() {
               <FlaskConical className="h-5 w-5" />
             </div>
             <span className="text-lg font-bold tracking-tight">
-              ChemPharm <span className="text-chem-primary">Hub</span>
+              {SITE.marca.base}<span className="titulo-marca text-chem-primary">{SITE.marca.destaque}</span>
             </span>
           </div>
           <button
@@ -135,6 +137,7 @@ export default function Home() {
               ficam salvos só neste navegador.
             </p>
           )}
+          <Rodape className="pb-0 pt-2" />
         </motion.div>
       </section>
     </main>

@@ -2,13 +2,15 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
+import { SITE } from "@/config/site";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider, themeInitScript } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
-  title: "ChemPharm Hub",
-  description:
-    "Laboratório virtual de Química Orgânica para estudantes de Farmácia: jogos com moléculas 3D reais e fórmulas em bastão IUPAC.",
+  title: SITE.nome,
+  description: SITE.descricao,
+  authors: [{ name: SITE.autor.nome, url: SITE.autor.url }],
+  creator: SITE.autor.nome,
 };
 
 export const viewport: Viewport = {
@@ -17,7 +19,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark" data-estilo="a" suppressHydrationWarning>
+    <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
