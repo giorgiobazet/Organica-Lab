@@ -74,7 +74,7 @@ function ModuleContent({ id }: { id: DisciplinaId }) {
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className={cn("glass relative mt-4 overflow-hidden bg-gradient-to-br to-transparent p-6", cor.gradient)}
+        className={cn("glass tinta relative mt-4 overflow-hidden bg-gradient-to-br to-transparent p-6", cor.gradient)}
       >
         <div className="flex flex-wrap items-center gap-3">
           <span className={cn("flex h-12 w-12 items-center justify-center rounded-xl", cor.bg, cor.text)}>

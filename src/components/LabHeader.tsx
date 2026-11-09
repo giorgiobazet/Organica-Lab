@@ -15,7 +15,7 @@ export function LabHeader() {
   const nome = profile?.nome ?? user?.nome ?? "";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-lab-light/75 backdrop-blur-md dark:border-white/5 dark:bg-lab-background/75">
+    <header className="sticky top-0 z-40 border-b border-ui-border/20 bg-ui-bg/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
         <Link href="/hub" className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-chem-primary/15 text-chem-primary">
@@ -55,7 +55,7 @@ export function LabHeader() {
           </div>
           <button
             onClick={toggleTheme}
-            className="rounded-lg border border-slate-300 p-2 text-muted transition hover:text-chem-primary dark:border-white/10"
+            className="btn-ghost !p-2 text-muted"
             aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
             title={theme === "dark" ? "Modo claro" : "Modo escuro"}
           >
@@ -63,7 +63,7 @@ export function LabHeader() {
           </button>
           <button
             onClick={() => signOut()}
-            className="rounded-lg border border-slate-300 p-2 text-muted transition hover:border-chem-danger hover:text-chem-danger dark:border-white/10"
+            className="btn-ghost !p-2 text-muted hover:!border-chem-danger hover:!text-chem-danger"
             aria-label="Sair"
             title="Sair"
           >

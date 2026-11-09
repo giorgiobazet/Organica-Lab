@@ -42,10 +42,10 @@ export default function Home() {
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.15fr_1fr]">
       {/* Lado esquerdo: molécula 3D real com iluminação ciano/violeta */}
-      <section className="relative flex flex-col overflow-hidden bg-lab-background text-lab-light lg:min-h-screen">
-        <div className="absolute inset-0 bg-lab-grid bg-grid opacity-60" />
-        <div className="absolute -left-24 top-1/4 h-96 w-96 rounded-full bg-chem-primary/25 blur-3xl" />
-        <div className="absolute -right-16 bottom-10 h-96 w-96 rounded-full bg-chem-orbital/25 blur-3xl" />
+      <section className="relative flex flex-col overflow-hidden bg-ui-hero lg:min-h-screen">
+        <div className="bg-grade absolute inset-0" />
+        <div className="absolute -left-24 top-1/4 h-96 w-96 rounded-full bg-chem-primary/25 blur-3xl decor" />
+        <div className="absolute -right-16 bottom-10 h-96 w-96 rounded-full bg-chem-orbital/25 blur-3xl decor" />
 
         <header className="relative z-10 flex items-center justify-between p-6">
           <div className="flex items-center gap-2.5">
@@ -58,7 +58,7 @@ export default function Home() {
           </div>
           <button
             onClick={toggleTheme}
-            className="rounded-lg border border-white/10 p-2 text-lab-muted transition hover:text-chem-primary"
+            className="btn-ghost !p-2 text-muted"
             aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -70,13 +70,13 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 p-6">
-          <div className="glass max-w-md !bg-lab-surface/70 p-4 !text-lab-light dark:!border-white/10">
+          <div className="glass max-w-md p-4">
             <p className="text-xs uppercase tracking-widest text-chem-primary">Princípio ativo em destaque</p>
             <h2 className="mt-1 text-lg font-semibold">{mol.nome}</h2>
-            <p className="font-mono text-sm text-lab-muted">
+            <p className="font-mono text-sm text-muted">
               {mol.formula} · {mol.massaMolar.toFixed(2)} g/mol
             </p>
-            <p className="mt-2 hidden text-sm text-lab-muted sm:block">
+            <p className="mt-2 hidden text-sm text-muted sm:block">
               {atual.classe}. {atual.nota}
             </p>
             <div className="mt-3 flex gap-2">
@@ -86,7 +86,7 @@ export default function Home() {
                   onClick={() => setIdx(i)}
                   className={cn(
                     "rounded-full px-3 py-1 text-xs font-medium transition",
-                    i === idx ? "bg-chem-primary text-lab-background" : "bg-white/5 text-lab-muted hover:text-lab-light",
+                    i === idx ? "bg-chem-primary text-lab-background" : "bg-ui-border/10 text-muted hover:text-chem-primary",
                   )}
                 >
                   {MOLECULES_3D[d.key].nome.replace(/ \(.*\)$/, "")}
@@ -99,9 +99,9 @@ export default function Home() {
 
       {/* Lado direito: Login / Cadastro em Glassmorphism */}
       <section className="relative flex items-center justify-center overflow-hidden p-6 sm:p-10">
-        <div className="absolute inset-0 bg-lab-grid bg-grid opacity-40" />
-        <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-chem-orbital/15 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-chem-primary/15 blur-3xl" />
+        <div className="bg-grade absolute inset-0 opacity-70" />
+        <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-chem-orbital/15 blur-3xl decor" />
+        <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-chem-primary/15 blur-3xl decor" />
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -111,7 +111,7 @@ export default function Home() {
         >
           <div className="max-w-md text-center">
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              O laboratório de <span className="text-chem-primary">Química Orgânica</span> que cabe na sua tela.
+              O laboratório de <span className="titulo-marca text-chem-primary">Química Orgânica</span> que cabe na sua tela.
             </h1>
             <p className="mt-3 text-sm text-muted">
               Moléculas 3D reais onde a geometria importa, fórmulas em bastão onde elas bastam.

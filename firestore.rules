@@ -8,7 +8,7 @@ service cloud.firestore {
         && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['nome', 'email', 'matricula', 'xp', 'progresso'])
         && request.resource.data.matricula is string
-        && request.resource.data.matricula.matches('^[0-9]{8,12}$')
+        && request.resource.data.matricula.matches('^[0-9]{12}$')
         && request.resource.data.xp == 0;
 
       allow read: if request.auth != null && request.auth.uid == uid;

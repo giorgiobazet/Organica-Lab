@@ -8,7 +8,18 @@ export interface CadastroInput {
 export type CadastroErrors = Partial<Record<keyof CadastroInput, string>>;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const MATRICULA_RE = /^\d{8,12}$/;
+/** Matrícula institucional: exatamente 12 dígitos (ex.: 202012345678). */
+export const MATRICULA_DIGITOS = 12;
+const MATRICULA_RE = new RegExp(`^\\d{${MATRICULA_DIGITOS}}$`);
+
+/** Política de senha atual (recomendações usuais de mercado). */
+export const REQUISITOS_SENHA: { id: string; rotulo: string; ok: (s: string) => boolean }[] = [
+  { id: "tamanho", rotulo: "8 caracteres ou mais", ok: (s) => s.length >= 8 },
+  { id: "maiuscula", rotulo: "uma letra maiúscula", ok: (s) => /[A-ZÀ-Ý]/.test(s) },
+  { id: "minuscula", rotulo: "uma letra minúscula", ok: (s) => /[a-zà-ý]/.test(s) },
+  { id: "numero", rotulo: "um número", ok: (s) => /\d/.test(s) },
+  { id: "simbolo", rotulo: "um símbolo (!@#$%…)", ok: (s) => /[^A-Za-zÀ-ÿ0-9\s]/.test(s) },
+];
 
 export function validarNome(nome: string): string | undefined {
   const partes = nome.trim().split(/\s+/).filter(Boolean);
@@ -24,12 +35,13 @@ export function validarEmail(email: string): string | undefined {
 
 export function validarMatricula(matricula: string): string | undefined {
   if (!/^\d*$/.test(matricula)) return "A matrícula aceita apenas números.";
-  if (!MATRICULA_RE.test(matricula)) return "A matrícula deve ter de 8 a 12 dígitos.";
+  if (!MATRICULA_RE.test(matricula)) return `A matrícula deve ter exatamente ${MATRICULA_DIGITOS} dígitos.`;
   return undefined;
 }
 
 export function validarSenha(senha: string): string | undefined {
-  if (senha.length < 6) return "A senha precisa de pelo menos 6 caracteres.";
+  const faltando = REQUISITOS_SENHA.filter((r) => !r.ok(senha));
+  if (faltando.length) return `A senha precisa de: ${faltando.map((r) => r.rotulo).join(", ")}.`;
   return undefined;
 }
 

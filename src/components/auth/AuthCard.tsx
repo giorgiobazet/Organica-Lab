@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AtSign, Hash, KeyRound, Loader2, LogIn, User, UserPlus } from "lucide-react";
+import { AtSign, Check, Circle, Eye, EyeOff, Hash, KeyRound, Loader2, LogIn, User, UserPlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { AuthError } from "@/lib/firebase";
-import { validarCadastro, validarEmail, type CadastroErrors, type CadastroInput } from "@/lib/validation";
+import { MATRICULA_DIGITOS, REQUISITOS_SENHA, validarCadastro, validarEmail, type CadastroErrors, type CadastroInput } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 
 type Tab = "login" | "cadastro";
@@ -84,10 +84,10 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
         <p className="text-sm text-muted">Use o e-mail e a senha do seu cadastro.</p>
       </div>
       <Field icon={<AtSign className="h-4 w-4" />} label="E-mail">
-        <input className="lab-input pl-9" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@universidade.br" />
+        <input className="lab-input pl-9" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu.email@exemplo.com" />
       </Field>
       <Field icon={<KeyRound className="h-4 w-4" />} label="Senha">
-        <input className="lab-input pl-9" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••" />
+        <CampoSenha value={senha} onChange={setSenha} autoComplete="current-password" />
       </Field>
       {erro && <p className="rounded-lg bg-chem-danger/10 px-3 py-2 text-sm text-chem-danger" role="alert">{erro}</p>}
       <button type="submit" className="btn-primary w-full" disabled={enviando}>
@@ -112,7 +112,7 @@ function CadastroForm({ onSwitch }: { onSwitch: () => void }) {
   const [enviando, setEnviando] = useState(false);
 
   const set = (k: keyof CadastroInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = k === "matricula" ? e.target.value.replace(/\D/g, "").slice(0, 12) : e.target.value;
+    const value = k === "matricula" ? e.target.value.replace(/\D/g, "").slice(0, MATRICULA_DIGITOS) : e.target.value;
     setForm((f) => ({ ...f, [k]: value }));
     if (errors[k]) setErrors((er) => ({ ...er, [k]: undefined }));
   };
@@ -140,17 +140,36 @@ function CadastroForm({ onSwitch }: { onSwitch: () => void }) {
         <p className="text-sm text-muted">Enviaremos um link de verificação para o seu e-mail.</p>
       </div>
       <Field icon={<User className="h-4 w-4" />} label="Nome completo" error={errors.nome}>
-        <input className="lab-input pl-9" autoComplete="name" value={form.nome} onChange={set("nome")} placeholder="Rafaella Souza" />
+        <input className="lab-input pl-9" autoComplete="name" value={form.nome} onChange={set("nome")} placeholder="Nome e sobrenome" />
       </Field>
       <Field icon={<AtSign className="h-4 w-4" />} label="E-mail institucional ou pessoal" error={errors.email}>
-        <input className="lab-input pl-9" type="email" autoComplete="email" value={form.email} onChange={set("email")} placeholder="voce@universidade.br" />
+        <input className="lab-input pl-9" type="email" autoComplete="email" value={form.email} onChange={set("email")} placeholder="seu.email@exemplo.com" />
       </Field>
-      <Field icon={<Hash className="h-4 w-4" />} label="Matrícula (8 a 12 dígitos)" error={errors.matricula}>
-        <input className="lab-input pl-9 font-mono" inputMode="numeric" autoComplete="off" value={form.matricula} onChange={set("matricula")} placeholder="202400123" />
+      <Field icon={<Hash className="h-4 w-4" />} label={`Matrícula (${MATRICULA_DIGITOS} dígitos)`} error={errors.matricula}>
+        <input
+          className="lab-input pl-9 font-mono"
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={MATRICULA_DIGITOS}
+          value={form.matricula}
+          onChange={set("matricula")}
+          placeholder="202012345678"
+        />
       </Field>
-      <Field icon={<KeyRound className="h-4 w-4" />} label="Senha (mínimo 6 caracteres)" error={errors.senha}>
-        <input className="lab-input pl-9" type="password" autoComplete="new-password" value={form.senha} onChange={set("senha")} placeholder="••••••" />
+      <Field icon={<KeyRound className="h-4 w-4" />} label="Senha" error={errors.senha}>
+        <CampoSenha value={form.senha} onChange={(v) => setForm((f) => ({ ...f, senha: v }))} autoComplete="new-password" />
       </Field>
+      <ul className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs" aria-label="Requisitos da senha">
+        {REQUISITOS_SENHA.map((r) => {
+          const ok = r.ok(form.senha);
+          return (
+            <li key={r.id} className={cn("flex items-center gap-1.5 transition", ok ? "text-chem-success" : "text-muted")}>
+              {ok ? <Check className="h-3.5 w-3.5" /> : <Circle className="h-3 w-3" />}
+              {r.rotulo}
+            </li>
+          );
+        })}
+      </ul>
       {erroGeral && <p className="rounded-lg bg-chem-danger/10 px-3 py-2 text-sm text-chem-danger" role="alert">{erroGeral}</p>}
       <button type="submit" className="btn-primary w-full" disabled={enviando}>
         {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
@@ -163,6 +182,30 @@ function CadastroForm({ onSwitch }: { onSwitch: () => void }) {
         </button>
       </p>
     </form>
+  );
+}
+
+function CampoSenha({ value, onChange, autoComplete }: { value: string; onChange: (v: string) => void; autoComplete: string }) {
+  const [visivel, setVisivel] = useState(false);
+  return (
+    <span className="relative block">
+      <input
+        className="lab-input pl-9 pr-10"
+        type={visivel ? "text" : "password"}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Sua senha"
+      />
+      <button
+        type="button"
+        onClick={() => setVisivel((v) => !v)}
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-chem-primary"
+        aria-label={visivel ? "Ocultar senha" : "Mostrar senha"}
+      >
+        {visivel ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </span>
   );
 }
 

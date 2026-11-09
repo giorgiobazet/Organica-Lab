@@ -8,8 +8,11 @@ import { MOLECULES_3D, getCachedByCid } from "@/data/molecules3d";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/ThemeContext";
 
-/** Fundo opaco por tema (halos translúcidos precisam de fundo opaco para manter a cor). */
-const FUNDO_OPACO = { dark: "#141C2C", light: "#EEF2F7" } as const;
+/** Fundo opaco do visualizador: token --viewer do estilo/tema ativo (halos translúcidos precisam de fundo opaco). */
+function fundoOpaco(): string {
+  if (typeof window === "undefined") return "#141C2C";
+  return getComputedStyle(document.documentElement).getPropertyValue("--viewer").trim() || "#141C2C";
+}
 
 export type MoleculeStyle = "ballAndStick" | "stick" | "spacefill";
 export type MoleculeSurface = "none" | "vdw";
@@ -161,9 +164,7 @@ export function Molecule3DViewer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasModel = useRef(false);
-  const { theme } = useTheme();
-  const temaRef = useRef(theme);
-  temaRef.current = theme;
+  const { theme, estilo } = useTheme();
   const highlightRef = useRef<AtomHighlight[] | undefined>(highlight);
   highlightRef.current = highlight;
   const labelsRef = useRef<AtomLabel[] | undefined>(labels);
@@ -179,7 +180,7 @@ export function Molecule3DViewer({
     import("3dmol").then(($3Dmol) => {
       if (disposed || !containerRef.current) return;
       const viewer = $3Dmol.createViewer(containerRef.current, {
-        backgroundColor: transparent ? "black" : FUNDO_OPACO[temaRef.current],
+        backgroundColor: transparent ? "black" : fundoOpaco(),
         backgroundAlpha: transparent ? 0 : 1,
         antialias: true,
       });
@@ -202,9 +203,9 @@ export function Molecule3DViewer({
   // Fundo opaco acompanha o tema claro/escuro.
   useEffect(() => {
     if (!ready || transparent || !viewerRef.current) return;
-    viewerRef.current.setBackgroundColor(FUNDO_OPACO[theme], 1);
+    viewerRef.current.setBackgroundColor(fundoOpaco(), 1);
     viewerRef.current.render();
-  }, [ready, transparent, theme]);
+  }, [ready, transparent, theme, estilo]);
 
   // Carrega a molécula: SDF explícito > cache local instantâneo > PubChem (substitui o cache).
   useEffect(() => {
@@ -289,13 +290,13 @@ export function Molecule3DViewer({
       />
 
       {(loading || error) && (
-        <div className="pointer-events-none absolute left-3 top-3 rounded-md bg-lab-background/70 px-2 py-1 font-mono text-[11px] text-lab-muted">
+        <div className="pointer-events-none absolute left-3 top-3 rounded-md bg-ui-surface/80 px-2 py-1 font-mono text-[11px] text-ui-muted">
           {error ? <span className="text-chem-danger">{error}</span> : "carregando estrutura…"}
         </div>
       )}
 
       {source.kind !== "none" && !error && (
-        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-md bg-lab-background/70 px-2 py-1 font-mono text-[11px] text-lab-muted">
+        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-md bg-ui-surface/80 px-2 py-1 font-mono text-[11px] text-ui-muted">
           {source.kind === "pubchem" ? (
             <a
               href={pubchemCompoundUrl(source.cid)}
@@ -318,7 +319,7 @@ export function Molecule3DViewer({
       )}
 
       {showControls && (
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/10 bg-lab-background/75 p-1 backdrop-blur-md">
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-ui-border/20 bg-ui-surface/85 p-1 shadow-lg backdrop-blur-md">
           <ControlButton active={style === "ballAndStick"} onClick={() => setStyle("ballAndStick")} title="Bola e bastão">
             <CircleDot className="h-4 w-4" />
           </ControlButton>
@@ -328,7 +329,7 @@ export function Molecule3DViewer({
           <ControlButton active={style === "spacefill"} onClick={() => setStyle("spacefill")} title="Preenchimento espacial (van der Waals)">
             <Atom className="h-4 w-4" />
           </ControlButton>
-          <span className="mx-1 h-5 w-px bg-white/10" />
+          <span className="mx-1 h-5 w-px bg-ui-border/30" />
           <ControlButton
             active={surface === "vdw"}
             onClick={() => setSurface((s) => (s === "vdw" ? "none" : "vdw"))}
@@ -370,7 +371,7 @@ function ControlButton({
       aria-label={title}
       aria-pressed={active}
       className={cn(
-        "rounded-lg p-2 text-lab-muted transition hover:text-lab-light",
+        "rounded-lg p-2 text-ui-muted transition hover:text-ui-text",
         active && tone === "primary" && "bg-chem-primary/20 text-chem-primary",
         active && tone === "orbital" && "bg-chem-orbital/20 text-chem-orbital",
       )}

@@ -37,7 +37,7 @@ function HubContent() {
 
   return (
     <main className="relative mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-lab-grid bg-grid opacity-50 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-grade [mask-image:linear-gradient(to_bottom,black,transparent)]" />
 
       {/* Hero */}
       <motion.section
@@ -46,15 +46,15 @@ function HubContent() {
         transition={{ duration: 0.35 }}
         className="glass relative overflow-hidden p-6 sm:p-8"
       >
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-chem-primary/20 blur-3xl" />
-        <div className="absolute -bottom-24 right-40 h-64 w-64 rounded-full bg-chem-orbital/20 blur-3xl" />
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-chem-primary/20 blur-3xl decor" />
+        <div className="absolute -bottom-24 right-40 h-64 w-64 rounded-full bg-chem-orbital/20 blur-3xl decor" />
         <div className="relative grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-center">
           <div>
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-chem-primary">
               <Sparkles className="h-3.5 w-3.5" /> Laboratório virtual de Química Orgânica
             </p>
             <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Bem-vindo(a) ao <span className="text-chem-primary">ChemPharm Hub</span>, {primeiroNome}.
+              Bem-vindo(a) ao <span className="titulo-marca text-chem-primary">ChemPharm Hub</span>, {primeiroNome}.
             </h1>
             <p className="mt-3 max-w-xl text-muted">
               Quatro disciplinas, jogos com moléculas reais do PubChem e uma regra simples: 3D onde a geometria muda a
@@ -130,7 +130,7 @@ function DisciplinaCard({ d, span, delay, concluidos }: { d: Disciplina; span: s
           wide ? "flex-col gap-4 sm:flex-row sm:items-center" : "flex-col gap-4",
         )}
       >
-        <div className={cn("absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl transition-opacity group-hover:opacity-100 opacity-60", cor.glow)} />
+        <div className={cn("decor absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl transition-opacity group-hover:opacity-100 opacity-60", cor.glow)} />
         <div className="relative flex flex-1 flex-col">
           <div className="flex items-center gap-3">
             <span className={cn("flex h-11 w-11 items-center justify-center rounded-xl", cor.bg, cor.text)}>

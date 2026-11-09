@@ -13,6 +13,14 @@ const config: Config = {
           muted: "#94A3B8",
           dark: "#0F172A",
         },
+        ui: {
+          bg: "rgb(var(--bg) / <alpha-value>)",
+          surface: "rgb(var(--surface) / <alpha-value>)",
+          border: "rgb(var(--border) / <alpha-value>)",
+          text: "rgb(var(--text) / <alpha-value>)",
+          muted: "rgb(var(--muted) / <alpha-value>)",
+          hero: "rgb(var(--hero) / <alpha-value>)",
+        },
         chem: {
           primary: "#06B6D4",
           orbital: "#8B5CF6",

@@ -120,7 +120,7 @@ const PERFIL_INICIAL = (input: Omit<CadastroInput, "senha">): UserProfile => ({
 const FIREBASE_ERROS: Record<string, string> = {
   "auth/email-already-in-use": "Este e-mail já está cadastrado.",
   "auth/invalid-email": "E-mail inválido.",
-  "auth/weak-password": "Senha fraca: use pelo menos 6 caracteres.",
+  "auth/weak-password": "Senha fraca: use 8+ caracteres com maiúscula, minúscula, número e símbolo.",
   "auth/invalid-credential": "E-mail ou senha incorretos.",
   "auth/user-not-found": "E-mail ou senha incorretos.",
   "auth/wrong-password": "E-mail ou senha incorretos.",
