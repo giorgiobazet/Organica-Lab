@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// Regras do ChemPharm Hub: cada aluno lê e escreve apenas o próprio perfil.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['nome', 'email', 'matricula', 'xp', 'progresso'])
+        && request.resource.data.matricula is string
+        && request.resource.data.matricula.matches('^[0-9]{8,12}$')
+        && request.resource.data.xp == 0;
+
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // Progresso e XP só depois do e-mail verificado; nome, e-mail e matrícula ficam imutáveis.
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['xp', 'progresso'])
+        && request.resource.data.xp is int
+        && request.resource.data.xp >= 0;
+
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

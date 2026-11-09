@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-lab-light text-lab-dark antialiased transition-colors duration-300;
+    @apply dark:bg-lab-background dark:text-lab-light;
+  }
+}
+
+@layer components {
+  /* Painel Glassmorphism: lab.surface a 60–80% + backdrop-blur-md */
+  .glass {
+    @apply rounded-2xl border border-slate-300/60 bg-white/70 shadow-xl backdrop-blur-md;
+    @apply dark:border-white/10 dark:bg-lab-surface/70;
+  }
+  .glass-strong {
+    @apply rounded-2xl border border-slate-300/60 bg-white/80 shadow-2xl backdrop-blur-md;
+    @apply dark:border-white/10 dark:bg-lab-surface/80;
+  }
+  .glass-soft {
+    @apply rounded-xl border border-slate-300/50 bg-white/60 backdrop-blur-md;
+    @apply dark:border-white/5 dark:bg-lab-surface/60;
+  }
+  .lab-input {
+    @apply w-full rounded-lg border border-slate-300 bg-white/80 px-3 py-2.5 text-sm text-lab-dark outline-none transition;
+    @apply placeholder:text-slate-400 focus:border-chem-primary focus:ring-2 focus:ring-chem-primary/30;
+    @apply dark:border-white/10 dark:bg-lab-background/60 dark:text-lab-light;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-chem-primary px-4 py-2.5 text-sm font-semibold text-lab-background transition;
+    @apply hover:brightness-110 hover:shadow-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chem-primary/60 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition;
+    @apply hover:border-chem-primary hover:text-chem-primary dark:border-white/10;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+}
+
+@layer utilities {
+  .text-muted {
+    @apply text-slate-500 dark:text-lab-muted;
+  }
+}
