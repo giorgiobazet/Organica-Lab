@@ -9,6 +9,10 @@ function Carregando() {
 
 /** Jogos jogáveis, por id (o mesmo id de chemistryData.ts). Carregados sob demanda. */
 export const JOGOS_DISPONIVEIS: Record<string, ComponentType> = {
+  "deckbuilder-aromaticos": dynamic(() => import("./organica2/DeckbuilderAromaticos"), {
+    ssr: false,
+    loading: Carregando,
+  }),
   "arena-mecanismos": dynamic(() => import("./organica1/ArenaMecanismos"), {
     ssr: false,
     loading: Carregando,
