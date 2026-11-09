@@ -13,6 +13,10 @@ export const JOGOS_DISPONIVEIS: Record<string, ComponentType> = {
     ssr: false,
     loading: Carregando,
   }),
+  "desafio-estereoquimica": dynamic(() => import("./organica1/DesafioEstereoquimica"), {
+    ssr: false,
+    loading: Carregando,
+  }),
   "simulador-conformacional": dynamic(() => import("./organica1/SimuladorConformacional"), {
     ssr: false,
     loading: Carregando,
