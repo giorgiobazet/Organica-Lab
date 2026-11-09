@@ -51,7 +51,8 @@ Tipografia: **Inter** na interface e **JetBrains Mono** em fórmulas, nomes IUPA
 
 ## Autenticação
 
-- `src/lib/firebase.ts` usa o Firebase real quando as variáveis `NEXT_PUBLIC_FIREBASE_*` estão no `.env.local`; sem elas, entra em **Modo Dev** (provedor local em `localStorage`, com botão "Simular Clique no Link de Verificação de E-mail (Modo Dev)").
+- `src/lib/firebase.ts` usa o Firebase real (projeto `chempharm-hub`, configuração pública versionada em `.env`). Sem as variáveis `NEXT_PUBLIC_FIREBASE_*` (ex.: sobrescritas vazias num `.env.local`), entra em **Modo Dev** (provedor local em `localStorage`, com botão "Simular Clique no Link de Verificação de E-mail (Modo Dev)").
+- Regras de segurança em `firestore.rules` (publicadas no console). E-mails de verificação em pt-BR.
 - Cadastro: nome completo, e-mail, matrícula (só dígitos, 8–12), senha (mínimo 6).
 - Rotas `/hub`, `/organica-1`, `/organica-2`, `/organica-3` e `/analise-organica` exigem login com `emailVerified === true` (`<RequireVerified/>`).
 - Perfil no Firestore: `users/{uid}` = `{ nome, email, matricula, xp, progresso }`.

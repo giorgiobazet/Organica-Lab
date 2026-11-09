@@ -6,6 +6,10 @@ import { Atom, Box, CircleDot, Cloud, Database, Globe2, Pause, Play, RotateCcw }
 import { fetchSdf3D, pubchemCompoundUrl } from "@/services/pubchem";
 import { MOLECULES_3D, getCachedByCid } from "@/data/molecules3d";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/context/ThemeContext";
+
+/** Fundo opaco por tema (halos translúcidos precisam de fundo opaco para manter a cor). */
+const FUNDO_OPACO = { dark: "#141C2C", light: "#EEF2F7" } as const;
 
 export type MoleculeStyle = "ballAndStick" | "stick" | "spacefill";
 export type MoleculeSurface = "none" | "vdw";
@@ -14,6 +18,14 @@ export interface AtomHighlight {
   /** índices 0-based dos átomos no SDF */
   atoms: number[];
   color: string;
+  /** multiplica o raio do halo (padrão 1) */
+  scale?: number;
+}
+
+export interface AtomLabel {
+  atom: number;
+  text: string;
+  color?: string;
 }
 
 export interface Molecule3DViewerProps {
@@ -27,7 +39,7 @@ export interface Molecule3DViewerProps {
   initialSurface?: MoleculeSurface;
   spin?: boolean;
   showControls?: boolean;
-  /** Fundo transparente para compor sobre painéis glass. */
+  /** Fundo transparente para compor sobre painéis glass. Use false em jogos com halos de destaque. */
   transparent?: boolean;
   className?: string;
   /** Acesso ao viewer 3Dmol para jogos que destacam átomos ou animam geometria. */
@@ -38,6 +50,8 @@ export interface Molecule3DViewerProps {
   highlight?: AtomHighlight[];
   /** Fator de zoom aplicado após enquadrar a molécula (padrão 0,9). */
   zoom?: number;
+  /** Rótulos de texto ancorados em átomos (ex.: "C1", "O⁻"). */
+  labels?: AtomLabel[];
 }
 
 type Source =
@@ -49,7 +63,13 @@ type Source =
 // Carbono em ciano (chem.primary) e heteroátomos na convenção CPK/Jmol.
 const COLOR_SCHEME = "cyanCarbon";
 
-function applyStyle(viewer: GLViewer, style: MoleculeStyle, surface: MoleculeSurface, highlight: AtomHighlight[] = []) {
+function applyStyle(
+  viewer: GLViewer,
+  style: MoleculeStyle,
+  surface: MoleculeSurface,
+  highlight: AtomHighlight[] = [],
+  labels: AtomLabel[] = [],
+) {
   viewer.removeAllSurfaces();
   if (style === "ballAndStick") {
     viewer.setStyle(
@@ -72,11 +92,27 @@ function applyStyle(viewer: GLViewer, style: MoleculeStyle, surface: MoleculeSur
     for (const atom of viewer.selectedAtoms({ index: h.atoms })) {
       viewer.addSphere({
         center: { x: atom.x ?? 0, y: atom.y ?? 0, z: atom.z ?? 0 },
-        radius: atom.elem === "H" ? 0.6 : 0.9,
+        radius: (atom.elem === "H" ? 0.6 : 0.9) * (h.scale ?? 1),
         color: h.color,
         opacity: 0.6,
       });
     }
+  }
+  viewer.removeAllLabels();
+  for (const l of labels) {
+    const [atom] = viewer.selectedAtoms({ index: l.atom });
+    if (!atom) continue;
+    viewer.addLabel(l.text, {
+      position: { x: atom.x ?? 0, y: atom.y ?? 0, z: atom.z ?? 0 },
+      backgroundColor: "#0B0F19",
+      backgroundOpacity: 0.75,
+      fontColor: l.color ?? "#F8FAFC",
+      fontSize: 13,
+      font: "JetBrains Mono, monospace",
+      borderThickness: 0,
+      inFront: true,
+      alignment: "bottomCenter",
+    });
   }
   if (surface === "vdw") {
     // Nuvem eletrônica em violeta neon (chem.orbital).
@@ -100,6 +136,7 @@ export function Molecule3DViewer({
   preserveView = false,
   highlight,
   zoom = 0.9,
+  labels,
 }: Molecule3DViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<GLViewer | null>(null);
@@ -111,9 +148,14 @@ export function Molecule3DViewer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasModel = useRef(false);
+  const { theme } = useTheme();
+  const temaRef = useRef(theme);
+  temaRef.current = theme;
   const highlightRef = useRef<AtomHighlight[] | undefined>(highlight);
   highlightRef.current = highlight;
-  const highlightKey = JSON.stringify(highlight ?? []);
+  const labelsRef = useRef<AtomLabel[] | undefined>(labels);
+  labelsRef.current = labels;
+  const highlightKey = JSON.stringify([highlight ?? [], labels ?? []]);
 
   // Cria o viewer uma única vez (3Dmol depende de window/WebGL: só no cliente).
   useEffect(() => {
@@ -122,7 +164,7 @@ export function Molecule3DViewer({
     import("3dmol").then(($3Dmol) => {
       if (disposed || !containerRef.current) return;
       const viewer = $3Dmol.createViewer(containerRef.current, {
-        backgroundColor: "black",
+        backgroundColor: transparent ? "black" : FUNDO_OPACO[temaRef.current],
         backgroundAlpha: transparent ? 0 : 1,
         antialias: true,
       });
@@ -142,6 +184,13 @@ export function Molecule3DViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transparent]);
 
+  // Fundo opaco acompanha o tema claro/escuro.
+  useEffect(() => {
+    if (!ready || transparent || !viewerRef.current) return;
+    viewerRef.current.setBackgroundColor(FUNDO_OPACO[theme], 1);
+    viewerRef.current.render();
+  }, [ready, transparent, theme]);
+
   // Carrega a molécula: SDF explícito > cache local instantâneo > PubChem (substitui o cache).
   useEffect(() => {
     if (!ready || !viewerRef.current) return;
@@ -154,7 +203,7 @@ export function Molecule3DViewer({
       const view = keepView ? viewer.getView() : null;
       viewer.removeAllModels();
       viewer.addModel(data, "sdf");
-      applyStyle(viewer, style, surface, highlightRef.current);
+      applyStyle(viewer, style, surface, highlightRef.current, labelsRef.current);
       if (view) {
         viewer.setView(view);
       } else {
@@ -197,7 +246,7 @@ export function Molecule3DViewer({
   }, [ready, cid, cacheKey, sdf]);
 
   useEffect(() => {
-    if (ready && viewerRef.current) applyStyle(viewerRef.current, style, surface, highlightRef.current);
+    if (ready && viewerRef.current) applyStyle(viewerRef.current, style, surface, highlightRef.current, labelsRef.current);
   }, [ready, style, surface, highlightKey]);
 
   useEffect(() => {

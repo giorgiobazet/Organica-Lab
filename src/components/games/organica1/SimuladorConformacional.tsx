@@ -218,7 +218,7 @@ function PainelAlcanos({ onConcluir }: { onConcluir: () => void }) {
           <span className="font-mono text-xs text-muted">ligação C2–C3 · bola e bastão</span>
         </div>
         <div className="relative min-h-[320px] flex-1">
-          <Molecule3DViewer sdf={sdf} preserveView spin={false} highlight={highlight} zoom={1.35} className="absolute inset-0" />
+          <Molecule3DViewer sdf={sdf} preserveView spin={false} transparent={false} highlight={highlight} zoom={1.35} className="absolute inset-0" />
         </div>
         <div className="space-y-3 border-t border-slate-200/70 p-4 dark:border-white/5">
           <div className="flex items-center gap-3">
@@ -440,7 +440,7 @@ function PainelCicloalcanos({ onConcluir }: { onConcluir: () => void }) {
         </div>
         <div className="relative min-h-[320px] flex-1">
           {sdf ? (
-            <Molecule3DViewer sdf={sdf} preserveView spin={false} highlight={highlight} zoom={1.35} className="absolute inset-0" />
+            <Molecule3DViewer sdf={sdf} preserveView spin={false} transparent={false} highlight={highlight} zoom={1.35} className="absolute inset-0" />
           ) : (
             <p className="p-6 text-sm text-muted">Carregando trajetórias…</p>
           )}
