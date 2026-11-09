@@ -22,6 +22,14 @@ export interface AtomHighlight {
   scale?: number;
 }
 
+/** Esfera livre (ex.: lobos de um orbital p vazio). */
+export interface ShapeSphere {
+  center: { x: number; y: number; z: number };
+  radius: number;
+  color: string;
+  opacity?: number;
+}
+
 export interface AtomLabel {
   atom: number;
   text: string;
@@ -52,6 +60,8 @@ export interface Molecule3DViewerProps {
   zoom?: number;
   /** Rótulos de texto ancorados em átomos (ex.: "C1", "O⁻"). */
   labels?: AtomLabel[];
+  /** Esferas livres desenhadas junto da molécula. */
+  esferas?: ShapeSphere[];
 }
 
 type Source =
@@ -69,6 +79,7 @@ function applyStyle(
   surface: MoleculeSurface,
   highlight: AtomHighlight[] = [],
   labels: AtomLabel[] = [],
+  esferas: ShapeSphere[] = [],
 ) {
   viewer.removeAllSurfaces();
   if (style === "ballAndStick") {
@@ -98,6 +109,7 @@ function applyStyle(
       });
     }
   }
+  for (const e of esferas) viewer.addSphere({ center: e.center, radius: e.radius, color: e.color, opacity: e.opacity ?? 0.45 });
   viewer.removeAllLabels();
   for (const l of labels) {
     const [atom] = viewer.selectedAtoms({ index: l.atom });
@@ -137,6 +149,7 @@ export function Molecule3DViewer({
   highlight,
   zoom = 0.9,
   labels,
+  esferas,
 }: Molecule3DViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<GLViewer | null>(null);
@@ -155,7 +168,9 @@ export function Molecule3DViewer({
   highlightRef.current = highlight;
   const labelsRef = useRef<AtomLabel[] | undefined>(labels);
   labelsRef.current = labels;
-  const highlightKey = JSON.stringify([highlight ?? [], labels ?? []]);
+  const esferasRef = useRef<ShapeSphere[] | undefined>(esferas);
+  esferasRef.current = esferas;
+  const highlightKey = JSON.stringify([highlight ?? [], labels ?? [], esferas ?? []]);
 
   // Cria o viewer uma única vez (3Dmol depende de window/WebGL: só no cliente).
   useEffect(() => {
@@ -203,7 +218,7 @@ export function Molecule3DViewer({
       const view = keepView ? viewer.getView() : null;
       viewer.removeAllModels();
       viewer.addModel(data, "sdf");
-      applyStyle(viewer, style, surface, highlightRef.current, labelsRef.current);
+      applyStyle(viewer, style, surface, highlightRef.current, labelsRef.current, esferasRef.current);
       if (view) {
         viewer.setView(view);
       } else {
@@ -246,7 +261,7 @@ export function Molecule3DViewer({
   }, [ready, cid, cacheKey, sdf]);
 
   useEffect(() => {
-    if (ready && viewerRef.current) applyStyle(viewerRef.current, style, surface, highlightRef.current, labelsRef.current);
+    if (ready && viewerRef.current) applyStyle(viewerRef.current, style, surface, highlightRef.current, labelsRef.current, esferasRef.current);
   }, [ready, style, surface, highlightKey]);
 
   useEffect(() => {
