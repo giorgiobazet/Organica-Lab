@@ -20,6 +20,19 @@ Sem configurar nada, o app entra em **Modo Dev**: cadastro, login e verificaçã
 3. Publique as regras de `firestore.rules` (cada aluno lê e escreve só o próprio perfil; XP e progresso exigem e-mail verificado).
 4. Reinicie `npm run dev`. O selo "Modo Dev" some do cabeçalho.
 
+## Publicar (Firebase Hosting)
+
+O site é exportado como arquivos estáticos (`out/`) e publicado no site de Hosting `organicalab` do projeto Firebase `chempharm-hub` → **https://organicalab.web.app**.
+
+```bash
+npx firebase-tools login
+npm run deploy
+```
+
+- `npm run deploy` faz o build e publica só o Hosting.
+- `npm run deploy:regras` publica as regras do Firestore (`firestore.rules`).
+- `npm run preview` serve a pasta `out/` localmente, como no Hosting.
+
 ## Estrutura
 
 | Caminho | O que é |
