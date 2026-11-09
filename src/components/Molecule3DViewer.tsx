@@ -10,6 +10,12 @@ import { cn } from "@/lib/utils";
 export type MoleculeStyle = "ballAndStick" | "stick" | "spacefill";
 export type MoleculeSurface = "none" | "vdw";
 
+export interface AtomHighlight {
+  /** índices 0-based dos átomos no SDF */
+  atoms: number[];
+  color: string;
+}
+
 export interface Molecule3DViewerProps {
   /** CID do PubChem: busca o confôrmero 3D oficial. */
   cid?: number;
@@ -26,6 +32,12 @@ export interface Molecule3DViewerProps {
   className?: string;
   /** Acesso ao viewer 3Dmol para jogos que destacam átomos ou animam geometria. */
   onViewerReady?: (viewer: GLViewer) => void;
+  /** Mantém câmera/zoom quando o SDF muda (animações conformacionais). */
+  preserveView?: boolean;
+  /** Átomos destacados em cor (ex.: interações 1,3-diaxiais em chem.danger). */
+  highlight?: AtomHighlight[];
+  /** Fator de zoom aplicado após enquadrar a molécula (padrão 0,9). */
+  zoom?: number;
 }
 
 type Source =
@@ -37,7 +49,7 @@ type Source =
 // Carbono em ciano (chem.primary) e heteroátomos na convenção CPK/Jmol.
 const COLOR_SCHEME = "cyanCarbon";
 
-function applyStyle(viewer: GLViewer, style: MoleculeStyle, surface: MoleculeSurface) {
+function applyStyle(viewer: GLViewer, style: MoleculeStyle, surface: MoleculeSurface, highlight: AtomHighlight[] = []) {
   viewer.removeAllSurfaces();
   if (style === "ballAndStick") {
     viewer.setStyle(
@@ -52,6 +64,19 @@ function applyStyle(viewer: GLViewer, style: MoleculeStyle, surface: MoleculeSur
   } else {
     // Raios de van der Waals reais (Bondi) são o padrão do estilo sphere do 3Dmol.
     viewer.setStyle({}, { sphere: { scale: 1.0, colorscheme: COLOR_SCHEME } });
+  }
+  // Destaques como halos translúcidos: o átomo mantém a cor CPK (vermelho sólido seria lido como oxigênio).
+  viewer.removeAllShapes();
+  for (const h of highlight) {
+    if (!h.atoms.length) continue;
+    for (const atom of viewer.selectedAtoms({ index: h.atoms })) {
+      viewer.addSphere({
+        center: { x: atom.x ?? 0, y: atom.y ?? 0, z: atom.z ?? 0 },
+        radius: atom.elem === "H" ? 0.6 : 0.9,
+        color: h.color,
+        opacity: 0.6,
+      });
+    }
   }
   if (surface === "vdw") {
     // Nuvem eletrônica em violeta neon (chem.orbital).
@@ -72,6 +97,9 @@ export function Molecule3DViewer({
   transparent = true,
   className,
   onViewerReady,
+  preserveView = false,
+  highlight,
+  zoom = 0.9,
 }: Molecule3DViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<GLViewer | null>(null);
@@ -82,6 +110,10 @@ export function Molecule3DViewer({
   const [source, setSource] = useState<Source>({ kind: "none" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasModel = useRef(false);
+  const highlightRef = useRef<AtomHighlight[] | undefined>(highlight);
+  highlightRef.current = highlight;
+  const highlightKey = JSON.stringify(highlight ?? []);
 
   // Cria o viewer uma única vez (3Dmol depende de window/WebGL: só no cliente).
   useEffect(() => {
@@ -118,12 +150,19 @@ export function Molecule3DViewer({
 
     const show = (data: string, src: Source) => {
       if (cancelled) return;
+      const keepView = preserveView && hasModel.current;
+      const view = keepView ? viewer.getView() : null;
       viewer.removeAllModels();
       viewer.addModel(data, "sdf");
-      applyStyle(viewer, style, surface);
-      viewer.zoomTo();
-      viewer.zoom(0.9);
+      applyStyle(viewer, style, surface, highlightRef.current);
+      if (view) {
+        viewer.setView(view);
+      } else {
+        viewer.zoomTo();
+        viewer.zoom(zoom);
+      }
       viewer.render();
+      hasModel.current = true;
       setSource(src);
       setError(null);
     };
@@ -158,8 +197,8 @@ export function Molecule3DViewer({
   }, [ready, cid, cacheKey, sdf]);
 
   useEffect(() => {
-    if (ready && viewerRef.current) applyStyle(viewerRef.current, style, surface);
-  }, [ready, style, surface]);
+    if (ready && viewerRef.current) applyStyle(viewerRef.current, style, surface, highlightRef.current);
+  }, [ready, style, surface, highlightKey]);
 
   useEffect(() => {
     const viewer = viewerRef.current;
@@ -172,7 +211,7 @@ export function Molecule3DViewer({
     const viewer = viewerRef.current;
     if (!viewer) return;
     viewer.zoomTo();
-    viewer.zoom(0.9);
+    viewer.zoom(zoom);
     viewer.render();
   };
 

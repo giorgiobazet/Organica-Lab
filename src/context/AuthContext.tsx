@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   getAuthBackend,
   type AppUser,
@@ -29,6 +29,11 @@ interface AuthContextValue {
   /** Soma XP e, opcionalmente, registra o último experimento acessado. */
   addXp(amount: number, experimento?: Omit<UltimoExperimento, "em">): Promise<void>;
   registrarExperimento(experimento: Omit<UltimoExperimento, "em">): Promise<void>;
+  /**
+   * Marca um jogo como concluído e soma o bônus de XP só na primeira vez.
+   * Devolve true se foi a primeira conclusão.
+   */
+  concluirJogo(disciplinaId: string, jogoId: string, xpBonus: number): Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -110,36 +115,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [backend]);
 
+  // Ref com o perfil mais recente: várias atualizações seguidas não se sobrescrevem.
+  const profileRef = useRef<UserProfile | null>(profile);
+  profileRef.current = profile;
+
   const persist = useCallback(
-    async (patch: Partial<UserProfile>) => {
-      if (!backend || !user || !profile) return;
-      const next = { ...profile, ...patch };
+    async (patchFn: (p: UserProfile) => Partial<UserProfile>) => {
+      const atual = profileRef.current;
+      if (!backend || !user || !atual) return;
+      const patch = patchFn(atual);
+      const next = { ...atual, ...patch };
+      profileRef.current = next;
       setProfile(next);
       await backend.updateProfile(user.uid, patch);
     },
-    [backend, user, profile],
+    [backend, user],
   );
 
   const registrarExperimento = useCallback(
     (experimento: Omit<UltimoExperimento, "em">) =>
-      persist({
-        progresso: {
-          ...profile?.progresso,
-          ultimoExperimento: { ...experimento, em: Date.now() },
-        },
-      }),
-    [persist, profile],
+      persist((p) => ({
+        progresso: { ...p.progresso, ultimoExperimento: { ...experimento, em: Date.now() } },
+      })),
+    [persist],
   );
 
   const addXp = useCallback(
     (amount: number, experimento?: Omit<UltimoExperimento, "em">) =>
-      persist({
-        xp: Math.max(0, Math.round((profile?.xp ?? 0) + amount)),
+      persist((p) => ({
+        xp: Math.max(0, Math.round(p.xp + amount)),
         progresso: experimento
-          ? { ...profile?.progresso, ultimoExperimento: { ...experimento, em: Date.now() } }
-          : (profile?.progresso ?? {}),
-      }),
-    [persist, profile],
+          ? { ...p.progresso, ultimoExperimento: { ...experimento, em: Date.now() } }
+          : p.progresso,
+      })),
+    [persist],
+  );
+
+  const concluirJogo = useCallback(
+    async (disciplinaId: string, jogoId: string, xpBonus: number) => {
+      const p0 = profileRef.current;
+      if (!p0 || p0.progresso.modulos?.[disciplinaId]?.concluidos.includes(jogoId)) return false;
+      await persist((p) => {
+        const modulos = p.progresso.modulos ?? {};
+        const atual = modulos[disciplinaId] ?? { xp: 0, concluidos: [] };
+        return {
+          xp: Math.max(0, Math.round(p.xp + xpBonus)),
+          progresso: {
+            ...p.progresso,
+            modulos: {
+              ...modulos,
+              [disciplinaId]: { xp: atual.xp + xpBonus, concluidos: [...atual.concluidos, jogoId] },
+            },
+          },
+        };
+      });
+      return true;
+    },
+    [persist],
   );
 
   const value: AuthContextValue = {
@@ -155,6 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     devVerifyEmail,
     addXp,
     registrarExperimento,
+    concluirJogo,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
