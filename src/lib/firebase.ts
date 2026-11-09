@@ -151,6 +151,8 @@ class FirebaseBackend implements AuthBackend {
   constructor() {
     this.app = getApps()[0] ?? initializeApp(firebaseConfig);
     this.auth = getAuth(this.app);
+    // E-mails de verificação e redefinição em português.
+    this.auth.languageCode = "pt-BR";
     this.db = getFirestore(this.app);
   }
 
