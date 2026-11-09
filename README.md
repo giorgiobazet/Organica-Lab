@@ -37,6 +37,31 @@ Sem configurar nada, o app entra em **Modo Dev**: cadastro, login e verificaçã
 
 Regras científicas, paleta e a Regra de Ouro 2D vs. 3D estão em [`CLAUDE.md`](./CLAUDE.md).
 
+## Jogos
+
+| Disciplina | Jogos |
+|---|---|
+| Orgânica 1 | Estruturas, Carga Formal e Ressonância · Simulador Conformacional · Desafio de Estereoquímica · Grupos Funcionais e Propriedades · Arena de Mecanismos |
+| Orgânica 2 | Deckbuilder de Reações Aromáticas · Laboratório de Alcenos, Alcinos, Álcoois, Éteres e Epóxidos |
+| Orgânica 3 | Bisturi Químico (retroanálise) |
+| Análise Orgânica | CSI Químico (elucidação estrutural, 100% 2D) |
+
+## Geradores de dados (Python + RDKit)
+
+Os arquivos em `src/data/` marcados como "Gerado por" vêm de scripts em `scripts/`:
+
+| Script | Gera | Fonte |
+|---|---|---|
+| `build3d.py` | `molecules3d.ts` | RDKit ETKDGv3 + MMFF94 |
+| `build_ringflip.py` | `ringFlip.ts` | MMFF94 com torsões do anel restritas |
+| `build_resonancia.py` | `resonancia.ts` | RDKit |
+| `build_estereo.py` | `estereo.ts` | rdCIPLabeler, conferido pela geometria |
+| `build_alcenos.py` | `alcenos.ts` | cis/trans conferidos pela geometria |
+| `build_bisturi.py` | `bisturi.ts` | RDKit (MMFF94/UFF) |
+| `build_csi.py` | `csi.ts` | espectros de IV e EM do NIST Chemistry WebBook (JCAMP-DX) |
+
+`build_csi.py` lê os JCAMP baixados de `https://webbook.nist.gov/cgi/cbook.cgi?JCAMP=<ID>&Index=<n>&Type=Mass|IR` (os IDs e índices usados estão no próprio script).
+
 ## Regenerar o cache 3D
 
 ```bash
