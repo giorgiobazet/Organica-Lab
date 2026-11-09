@@ -14,8 +14,7 @@ export function Rodape({ className }: { className?: string }) {
           className="font-semibold text-ui-text underline-offset-4 transition hover:text-chem-primary hover:underline"
         >
           {SITE.autor.nome}
-        </a>{" "}
-        · {SITE.ano}
+        </a>
       </p>
       <p className="mt-1 opacity-80">Consultoria: {SITE.consultoria}</p>
     </footer>

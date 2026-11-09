@@ -9,5 +9,4 @@ export const SITE = {
     "Laboratório virtual de Química Orgânica: jogos com moléculas 3D reais onde a geometria importa e fórmulas em bastão IUPAC onde elas bastam.",
   autor: { nome: "Giorgio Bazet", url: "https://www.linkedin.com/in/giorgio-bazet/" },
   consultoria: "Rafaella Costa",
-  ano: 2026,
 } as const;
