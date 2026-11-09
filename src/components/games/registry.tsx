@@ -17,6 +17,10 @@ export const JOGOS_DISPONIVEIS: Record<string, ComponentType> = {
     ssr: false,
     loading: Carregando,
   }),
+  "grupos-funcionais": dynamic(() => import("./organica1/GruposFuncionais"), {
+    ssr: false,
+    loading: Carregando,
+  }),
   "simulador-conformacional": dynamic(() => import("./organica1/SimuladorConformacional"), {
     ssr: false,
     loading: Carregando,
