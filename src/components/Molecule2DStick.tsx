@@ -13,8 +13,8 @@ export interface Molecule2DStickProps {
   smiles: string;
   width?: number;
   height?: number;
-  /** Índices de átomos (ordem do SMILES) a destacar em ciano. */
-  highlightAtoms?: number[];
+  /** Destaques por classe de átomo do SMILES ([C:1] → classe 1): pares [classe, cor]. */
+  highlightAtoms?: [number, string][];
   /** Mostra os hidrogênios explícitos escritos no SMILES. */
   explicitHydrogens?: boolean;
   label?: string;
