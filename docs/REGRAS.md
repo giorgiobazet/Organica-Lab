@@ -60,6 +60,6 @@ Tipografia: **Inter** na interface e **JetBrains Mono** em fórmulas, nomes IUPA
 - Regras de segurança em `firestore.rules` (publicadas no console). E-mails de verificação em pt-BR.
 - A mesma política de senha é exigida no servidor (Authentication → Configurações → Política de senha: "Exigir aplicação").
 - Site publicado em https://organicalab.web.app (Hosting do projeto `chempharm-hub`, site `organicalab`); `npm run deploy` publica, e o domínio está em "Domínios autorizados".
-- Cadastro: nome completo, e-mail, matrícula (exatamente 12 dígitos, ex.: 202012345678), senha com 8+ caracteres, maiúscula, minúscula, número e símbolo (`REQUISITOS_SENHA` em `src/lib/validation.ts`).
+- Cadastro: nome completo, e-mail, matrícula (aluno: 12 dígitos, ex.: 202012345678; professor/técnico: `00000-0`, ex.: 12345-6 → `perfil: "servidor"`, derivado do formato e conferido em `firestore.rules`; o perfil só identifica, não dá acesso extra), senha com 8+ caracteres, maiúscula, minúscula, número e símbolo (`REQUISITOS_SENHA` em `src/lib/validation.ts`).
 - Rotas `/hub`, `/organica-1`, `/organica-2`, `/organica-3` e `/analise-organica` exigem login com `emailVerified === true` (`<RequireVerified/>`).
-- Perfil no Firestore: `users/{uid}` = `{ nome, email, matricula, xp, progresso }`.
+- Perfil no Firestore: `users/{uid}` = `{ nome, email, matricula, perfil, xp, progresso }` (perfis antigos sem `perfil` são de alunos).

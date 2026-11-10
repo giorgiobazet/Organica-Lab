@@ -21,7 +21,7 @@ import {
   type User,
 } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, type Firestore } from "firebase/firestore";
-import type { CadastroInput } from "./validation";
+import { perfilDaMatricula, type CadastroInput, type Perfil } from "./validation";
 
 // ---------------------------------------------------------------------------
 // Tipos compartilhados
@@ -54,6 +54,8 @@ export interface UserProfile {
   nome: string;
   email: string;
   matricula: string;
+  /** Derivado do formato da matrícula; perfis antigos sem o campo são de alunos. */
+  perfil?: Perfil;
   xp: number;
   progresso: Progresso;
 }
@@ -109,6 +111,7 @@ const PERFIL_INICIAL = (input: Omit<CadastroInput, "senha">): UserProfile => ({
   nome: input.nome.trim(),
   email: input.email.trim().toLowerCase(),
   matricula: input.matricula,
+  perfil: perfilDaMatricula(input.matricula) ?? "aluno",
   xp: 0,
   progresso: {},
 });

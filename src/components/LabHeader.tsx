@@ -52,7 +52,10 @@ export function LabHeader() {
         <div className="ml-auto flex items-center gap-3">
           <div className="text-right leading-tight">
             <p className="max-w-[180px] truncate text-sm font-semibold">{nome}</p>
-            <p className="font-mono text-xs text-muted">Matrícula {profile?.matricula ?? "—"}</p>
+            <p className="font-mono text-xs text-muted">
+              {profile?.perfil === "servidor" && <span className="chip mr-1.5 bg-chem-orbital/15 font-sans text-chem-orbital">Professor(a) / Técnico(a)</span>}
+              Matrícula {profile?.matricula ?? "—"}
+            </p>
           </div>
           <button
             onClick={toggleTheme}

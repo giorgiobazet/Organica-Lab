@@ -1,14 +1,17 @@
 rules_version = '2';
 
-// Regras do ChemPharm Hub: cada aluno lê e escreve apenas o próprio perfil.
+// Cada usuário (aluno ou servidor) lê e escreve apenas o próprio perfil.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid} {
       allow create: if request.auth != null
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['nome', 'email', 'matricula', 'xp', 'progresso'])
+        && request.resource.data.keys().hasOnly(['nome', 'email', 'matricula', 'perfil', 'xp', 'progresso'])
         && request.resource.data.matricula is string
-        && request.resource.data.matricula.matches('^[0-9]{12}$')
+        // Perfil coerente com o formato: aluno = 12 dígitos; servidor (professor/técnico) = 00000-0.
+        // O perfil só identifica o usuário: nenhuma regra concede acesso extra a servidores.
+        && ((request.resource.data.matricula.matches('^[0-9]{12}$') && request.resource.data.perfil == 'aluno')
+          || (request.resource.data.matricula.matches('^[0-9]{5}-[0-9]$') && request.resource.data.perfil == 'servidor'))
         && request.resource.data.xp == 0;
 
       allow read: if request.auth != null && request.auth.uid == uid;

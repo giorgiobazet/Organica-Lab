@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AtSign, Check, Circle, Eye, EyeOff, Hash, KeyRound, Loader2, LogIn, User, UserPlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { AuthError } from "@/lib/firebase";
-import { MATRICULA_DIGITOS, REQUISITOS_SENHA, validarCadastro, validarEmail, type CadastroErrors, type CadastroInput } from "@/lib/validation";
+import { EXEMPLO_MATRICULA, MATRICULA_MAX, REQUISITOS_SENHA, ROTULO_PERFIL, perfilDaMatricula, validarCadastro, validarEmail, type CadastroErrors, type CadastroInput } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 
 type Tab = "login" | "cadastro";
@@ -112,7 +112,7 @@ function CadastroForm({ onSwitch }: { onSwitch: () => void }) {
   const [enviando, setEnviando] = useState(false);
 
   const set = (k: keyof CadastroInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = k === "matricula" ? e.target.value.replace(/\D/g, "").slice(0, MATRICULA_DIGITOS) : e.target.value;
+    const value = k === "matricula" ? e.target.value.replace(/[^\d-]/g, "").slice(0, MATRICULA_MAX) : e.target.value;
     setForm((f) => ({ ...f, [k]: value }));
     if (errors[k]) setErrors((er) => ({ ...er, [k]: undefined }));
   };
@@ -145,17 +145,25 @@ function CadastroForm({ onSwitch }: { onSwitch: () => void }) {
       <Field icon={<AtSign className="h-4 w-4" />} label="E-mail institucional ou pessoal" error={errors.email}>
         <input className="lab-input pl-9" type="email" autoComplete="email" value={form.email} onChange={set("email")} placeholder="seu.email@exemplo.com" />
       </Field>
-      <Field icon={<Hash className="h-4 w-4" />} label={`Matrícula (${MATRICULA_DIGITOS} dígitos)`} error={errors.matricula}>
+      <Field icon={<Hash className="h-4 w-4" />} label="Matrícula" error={errors.matricula}>
         <input
           className="lab-input pl-9 font-mono"
           inputMode="numeric"
           autoComplete="off"
-          maxLength={MATRICULA_DIGITOS}
+          maxLength={MATRICULA_MAX}
           value={form.matricula}
           onChange={set("matricula")}
-          placeholder="202012345678"
+          placeholder={EXEMPLO_MATRICULA.aluno}
         />
       </Field>
+      <p className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+        <span>
+          Aluno: 12 dígitos · Professor/técnico: <span className="font-mono">{EXEMPLO_MATRICULA.servidor}</span>
+        </span>
+        {perfilDaMatricula(form.matricula) && (
+          <span className="chip bg-chem-primary/15 text-chem-primary">Perfil: {ROTULO_PERFIL[perfilDaMatricula(form.matricula)!]}</span>
+        )}
+      </p>
       <Field icon={<KeyRound className="h-4 w-4" />} label="Senha" error={errors.senha}>
         <CampoSenha value={form.senha} onChange={(v) => setForm((f) => ({ ...f, senha: v }))} autoComplete="new-password" />
       </Field>

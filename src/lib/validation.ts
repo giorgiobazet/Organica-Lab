@@ -8,9 +8,24 @@ export interface CadastroInput {
 export type CadastroErrors = Partial<Record<keyof CadastroInput, string>>;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-/** Matrícula institucional: exatamente 12 dígitos (ex.: 202012345678). */
-export const MATRICULA_DIGITOS = 12;
-const MATRICULA_RE = new RegExp(`^\\d{${MATRICULA_DIGITOS}}$`);
+/**
+ * Matrícula institucional define o perfil:
+ *   aluno    → 12 dígitos (ex.: 202012345678)
+ *   servidor → 5 dígitos, hífen e dígito verificador (ex.: 12345-6), para professores e técnicos
+ * O formato só identifica o perfil: ele não comprova vínculo e não concede nenhum acesso extra.
+ */
+export type Perfil = "aluno" | "servidor";
+export const MATRICULA_MAX = 12;
+const MATRICULA_ALUNO_RE = /^\d{12}$/;
+const MATRICULA_SERVIDOR_RE = /^\d{5}-\d$/;
+export const EXEMPLO_MATRICULA = { aluno: "202012345678", servidor: "12345-6" } as const;
+export const ROTULO_PERFIL: Record<Perfil, string> = { aluno: "Aluno(a)", servidor: "Professor(a) / Técnico(a)" };
+
+export function perfilDaMatricula(matricula: string): Perfil | null {
+  if (MATRICULA_ALUNO_RE.test(matricula)) return "aluno";
+  if (MATRICULA_SERVIDOR_RE.test(matricula)) return "servidor";
+  return null;
+}
 
 /** Política de senha atual (recomendações usuais de mercado). */
 export const REQUISITOS_SENHA: { id: string; rotulo: string; ok: (s: string) => boolean }[] = [
@@ -34,8 +49,10 @@ export function validarEmail(email: string): string | undefined {
 }
 
 export function validarMatricula(matricula: string): string | undefined {
-  if (!/^\d*$/.test(matricula)) return "A matrícula aceita apenas números.";
-  if (!MATRICULA_RE.test(matricula)) return `A matrícula deve ter exatamente ${MATRICULA_DIGITOS} dígitos.`;
+  if (!/^[\d-]*$/.test(matricula)) return "A matrícula aceita apenas números (e o hífen, para servidores).";
+  if (!perfilDaMatricula(matricula)) {
+    return `Use a matrícula de aluno (12 dígitos, ex.: ${EXEMPLO_MATRICULA.aluno}) ou de professor/técnico (ex.: ${EXEMPLO_MATRICULA.servidor}).`;
+  }
   return undefined;
 }
 
