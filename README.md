@@ -48,7 +48,7 @@ npm run deploy
 | `src/data/molecules3d.ts` | Geometrias 3D em cache, geradas por `scripts/build3d.py` |
 | `src/data/chemistryData.ts` | Disciplinas, ementas, catálogo de jogos e dados de referência com fonte |
 
-Regras científicas, paleta e a Regra de Ouro 2D vs. 3D estão nas [regras do projeto](./.claude/CLAUDE.md).
+Regras científicas, paleta e a Regra de Ouro 2D vs. 3D estão nas [regras do projeto](./docs/REGRAS.md).
 
 ## Jogos
 
