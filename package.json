@@ -7,7 +7,7 @@
     "build": "next build",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "deploy": "next build && npx -y firebase-tools@latest deploy --only hosting",
+    "deploy": "next build && node scripts/checar-build.mjs && npx -y firebase-tools@latest deploy --only hosting",
     "deploy:regras": "npx -y firebase-tools@latest deploy --only firestore:rules",
     "preview": "npx -y serve@14 out"
   },
@@ -33,5 +33,11 @@
     "postcss": "^8.5.32",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.7",
+    "next": {
+      "postcss": "$postcss"
+    }
   }
 }

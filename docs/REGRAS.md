@@ -6,7 +6,14 @@ Plataforma educacional de Química Orgânica (Farmácia e cursos afins). Idealiz
 - **Visual**: estilo "Orbital" — tokens semânticos (`--bg`, `--surface`, `--border`, `--text`, `--muted`, `--hero`, `--viewer`) em `src/app/globals.css`, versões clara e escura; use as classes `ui-*`, `glass`, `text-muted`, `btn-primary`, `titulo-marca` em vez de cores fixas.
 - **Rodapé** (`<Rodape/>`): assinatura do autor no login, no Hub e nas disciplinas.
 
-Stack: Next.js 15 (App Router) + TypeScript + Tailwind CSS 3 + Framer Motion + Lucide + Recharts + 3Dmol.js + smiles-drawer + Firebase.
+Stack: Next.js 15 (App Router) + TypeScript + Tailwind CSS 3 + Framer Motion (via `LazyMotion`, componentes `m.*`) + Lucide + 3Dmol.js + smiles-drawer + Firebase (Auth + Firestore Lite).
+
+## Desempenho (aparelhos simples)
+
+- Gráficos: `<GraficoLinha/>` e `<GraficoBarras/>` em `src/components/charts/GraficoSVG.tsx` (SVG puro). Não adicione bibliotecas de gráficos.
+- Animações: use `m.div` etc. (não `motion.div`); o `<LeveProvider/>` carrega só os recursos usados.
+- **Modo Leve** (`html.leve`, `src/context/LeveContext.tsx`): liga sozinho em aparelhos fracos e pelo botão da pena. Tira desfoque, brilhos e transições, e o 3D começa parado e sem antialiasing. Elementos decorativos caros levam a classe `decor` (somem no Modo Leve).
+- Login: pôsteres em `public/moleculas/*.webp` (gerados do próprio visualizador) aparecem antes do 3D.
 
 ## Comandos
 
@@ -59,7 +66,8 @@ Tipografia: **Inter** na interface e **JetBrains Mono** em fórmulas, nomes IUPA
 - `src/lib/firebase.ts` usa o Firebase real (projeto `chempharm-hub`, configuração pública versionada em `.env`). Sem as variáveis `NEXT_PUBLIC_FIREBASE_*` (ex.: sobrescritas vazias num `.env.local`), entra em **Modo Dev** (provedor local em `localStorage`, com botão "Simular Clique no Link de Verificação de E-mail (Modo Dev)").
 - Regras de segurança em `firestore.rules` (publicadas no console). E-mails de verificação em pt-BR.
 - A mesma política de senha é exigida no servidor (Authentication → Configurações → Política de senha: "Exigir aplicação").
-- Site publicado em https://organicalab.web.app (Hosting do projeto `chempharm-hub`, site `organicalab`); `npm run deploy` publica, e o domínio está em "Domínios autorizados".
+- Site publicado em https://organicalab.web.app (Hosting do projeto `chempharm-hub`, site `organicalab`); `npm run deploy` publica (antes, `scripts/checar-build.mjs` barra builds sem a configuração do Firebase), e o domínio está em "Domínios autorizados".
+- Cabeçalhos de segurança (CSP, X-Frame-Options, HSTS etc.) em `firebase.json`; um domínio externo novo precisa entrar no `connect-src` da CSP.
 - Cadastro: nome completo, e-mail, matrícula (aluno: 12 dígitos, ex.: 202012345678; professor/técnico: `00000-0`, ex.: 12345-6 → `perfil: "servidor"`, derivado do formato e conferido em `firestore.rules`; o perfil só identifica, não dá acesso extra), senha com 8+ caracteres, maiúscula, minúscula, número e símbolo (`REQUISITOS_SENHA` em `src/lib/validation.ts`).
 - Rotas `/hub`, `/organica-1`, `/organica-2`, `/organica-3` e `/analise-organica` exigem login com `emailVerified === true` (`<RequireVerified/>`).
 - Perfil no Firestore: `users/{uid}` = `{ nome, email, matricula, perfil, xp, progresso }` (perfis antigos sem `perfil` são de alunos).
