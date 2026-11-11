@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { AnimatePresence, m } from "framer-motion";
+import { GraficoBarras } from "@/components/charts/GraficoSVG";
 import { ArrowRight, CheckCircle2, Droplets, Flame, Magnet, Trophy, XCircle } from "lucide-react";
 import { Molecule2DStick } from "@/components/Molecule2DStick";
 import { useAuth } from "@/context/AuthContext";
@@ -31,15 +31,6 @@ const COR_FORCA: Record<Forca, string> = {
   "dispersão de London": "bg-slate-200/70 text-lab-dark dark:bg-white/10 dark:text-lab-light",
   "dipolo-dipolo": "bg-chem-orbital/15 text-chem-orbital",
   "ligação de hidrogênio": "bg-chem-primary/15 text-chem-primary",
-};
-
-const tooltipStyle = {
-  background: "rgba(15,23,42,0.92)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: 8,
-  color: "#F8FAFC",
-  fontFamily: "'JetBrains Mono Variable', monospace",
-  fontSize: 12,
 };
 
 function embaralhar<T>(arr: T[], seed: number): T[] {
@@ -111,7 +102,7 @@ function FeedbackBox({ fb }: { fb: Feedback }) {
   return (
     <AnimatePresence mode="wait">
       {fb && (
-        <motion.p
+        <m.p
           key={fb.texto}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -121,7 +112,7 @@ function FeedbackBox({ fb }: { fb: Feedback }) {
         >
           {fb.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
           {fb.texto}
-        </motion.p>
+        </m.p>
       )}
     </AnimatePresence>
   );
@@ -309,19 +300,19 @@ function Propriedades({ feitos, onFeito }: { feitos: number[]; onFeito: (i: numb
         <div className="glass p-4">
           <p className="mb-2 text-sm font-semibold">Ponto de ebulição (°C)</p>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dados} margin={{ top: 8, right: 8, bottom: 40, left: -8 }}>
-                <CartesianGrid stroke="rgba(148,163,184,0.15)" vertical={false} />
-                <XAxis dataKey="nome" tick={{ fontSize: 11, fill: "#94A3B8" }} interval={0} angle={-25} textAnchor="end" />
-                <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(148,163,184,0.08)" }} formatter={(v) => [`${fmtNum(Number(v))} °C`, "PE"]} />
-                <Bar dataKey="pe" radius={[6, 6, 0, 0]} onClick={(d) => setSelId((d as unknown as { id: string }).id)} cursor="pointer">
-                  {dados.map((d) => (
-                    <Cell key={d.id} fill={d.id === sel.id ? "#06B6D4" : "#8B5CF6"} fillOpacity={d.id === sel.id ? 1 : 0.55} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <GraficoBarras
+              modo="categorias"
+              cantos={6}
+              barras={dados.map((d) => ({
+                chave: d.id,
+                x: d.nome,
+                valor: d.pe,
+                cor: d.id === sel.id ? "#06B6D4" : "#8B5CF6",
+                opacidade: d.id === sel.id ? 1 : 0.55,
+              }))}
+              aoClicar={(b) => setSelId(String(b.chave))}
+              dica={(b) => [String(b.x), "PE", `${fmtNum(b.valor)} °C`]}
+            />
           </div>
           <p className="mt-1 font-mono text-[11px] text-muted">Fonte: {FONTE_PROPRIEDADES}</p>
         </div>

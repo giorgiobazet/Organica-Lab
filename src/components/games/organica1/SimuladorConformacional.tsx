@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { CartesianGrid, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { AnimatePresence, m } from "framer-motion";
+import { GraficoLinha } from "@/components/charts/GraficoSVG";
 import { CheckCircle2, Pause, Play, RotateCcw, Target, Trophy, XCircle } from "lucide-react";
 import { Molecule3DViewer } from "@/components/Molecule3DViewer";
 import { NewmanProjection } from "./NewmanProjection";
@@ -95,7 +95,7 @@ function FeedbackBox({ fb }: { fb: Feedback }) {
   return (
     <AnimatePresence mode="wait">
       {fb && (
-        <motion.p
+        <m.p
           key={fb.texto}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -108,7 +108,7 @@ function FeedbackBox({ fb }: { fb: Feedback }) {
         >
           {fb.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
           {fb.texto}
-        </motion.p>
+        </m.p>
       )}
     </AnimatePresence>
   );
@@ -122,15 +122,6 @@ function embaralhar<T>(arr: T[]): T[] {
   }
   return a;
 }
-
-const tooltipStyle = {
-  background: "rgba(15,23,42,0.92)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: 8,
-  color: "#F8FAFC",
-  fontFamily: "'JetBrains Mono Variable', monospace",
-  fontSize: 12,
-};
 
 // ---------------------------------------------------------------------------
 // Alcanos: etano e butano
@@ -150,6 +141,7 @@ function PainelAlcanos({ onConcluir }: { onConcluir: () => void }) {
 
   const sdf = useMemo(() => sdfAlcano(alcano, phi), [alcano, phi]);
   const curva = useMemo(() => curvaEnergia(alcano), [alcano]);
+  const curvaXY = useMemo(() => curva.map((c) => ({ x: c.phi, y: c.energia })), [curva]);
   const e = energia(alcano, phi);
   const nome = nomeConformacao(alcano, phi);
   const alvo = fila[0];
@@ -270,16 +262,16 @@ function PainelAlcanos({ onConcluir }: { onConcluir: () => void }) {
         <div className="glass p-4">
           <p className="mb-2 text-sm font-semibold">Energia potencial × ângulo diedro</p>
           <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={curva} margin={{ top: 8, right: 12, bottom: 4, left: -12 }}>
-                <CartesianGrid stroke="rgba(148,163,184,0.15)" />
-                <XAxis dataKey="phi" type="number" domain={[0, 360]} ticks={[0, 60, 120, 180, 240, 300, 360]} tick={{ fontSize: 11, fill: "#94A3B8" }} unit="°" />
-                <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} domain={[0, alcano === "butano" ? 20 : 13]} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${Number(v).toFixed(1)} kJ/mol`, "E"]} labelFormatter={(l) => `φ = ${l}°`} />
-                <Line type="monotone" dataKey="energia" stroke="#8B5CF6" strokeWidth={2.5} dot={false} isAnimationActive={false} />
-                <ReferenceDot x={Math.round(phi)} y={+e.toFixed(2)} r={6} fill="#06B6D4" stroke="#F8FAFC" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+            <GraficoLinha
+              dados={curvaXY}
+              dominioX={[0, 360]}
+              marcasX={[0, 60, 120, 180, 240, 300, 360]}
+              unidadeX="°"
+              dominioY={[0, alcano === "butano" ? 20 : 13]}
+              cor="#8B5CF6"
+              destaques={[{ x: Math.round(phi), y: +e.toFixed(2), cor: "#06B6D4" }]}
+              dica={(pt) => [`φ = ${pt.x}°`, "E", `${pt.y.toFixed(1)} kJ/mol`]}
+            />
           </div>
         </div>
 
@@ -391,7 +383,7 @@ function PainelCicloalcanos({ onConcluir }: { onConcluir: () => void }) {
     return [];
   }, [d, naCadeiraA, naCadeiraB]);
 
-  const chart = useMemo(() => d?.energiaMMFF.map((energia, i) => ({ i, energia })) ?? [], [d]);
+  const chart = useMemo(() => d?.energiaMMFF.map((energia, i) => ({ x: i, y: energia })) ?? [], [d]);
   const ref = CADEIRAS_REF[mol];
 
   const descrever = (c: RingFlipData["cadeiraA"]) =>
@@ -485,16 +477,15 @@ function PainelCicloalcanos({ onConcluir }: { onConcluir: () => void }) {
         <div className="glass p-4">
           <p className="mb-2 text-sm font-semibold">Perfil de energia da inversão (MMFF94)</p>
           <div className="h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chart} margin={{ top: 8, right: 12, bottom: 4, left: -12 }}>
-                <CartesianGrid stroke="rgba(148,163,184,0.15)" />
-                <XAxis dataKey="i" type="number" domain={[0, ultimo]} tick={false} label={{ value: "coordenada de reação", position: "insideBottom", fill: "#94A3B8", fontSize: 11, offset: 0 }} />
-                <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${Number(v).toFixed(1)} kJ/mol`, "E"]} labelFormatter={(l) => d?.rotulos[Number(l)] ?? `quadro ${l}`} />
-                <Line type="monotone" dataKey="energia" stroke="#8B5CF6" strokeWidth={2.5} dot={false} isAnimationActive={false} />
-                {d && <ReferenceDot x={frame} y={d.energiaMMFF[frame]} r={6} fill="#06B6D4" stroke="#F8FAFC" strokeWidth={2} />}
-              </LineChart>
-            </ResponsiveContainer>
+            <GraficoLinha
+              dados={chart}
+              dominioX={[0, ultimo]}
+              mostrarMarcasX={false}
+              rotuloX="coordenada de reação"
+              cor="#8B5CF6"
+              destaques={d ? [{ x: frame, y: d.energiaMMFF[frame], cor: "#06B6D4" }] : []}
+              dica={(pt) => [d?.rotulos[pt.x] ?? `quadro ${pt.x}`, "E", `${pt.y.toFixed(1)} kJ/mol`]}
+            />
           </div>
           <p className="mt-2 font-mono text-[11px] text-muted">
             Referência (cicloexano): cadeira {CICLOEXANO_REF.cadeira} · meia-cadeira {CICLOEXANO_REF["meia-cadeira"]} · bote-torcido{" "}

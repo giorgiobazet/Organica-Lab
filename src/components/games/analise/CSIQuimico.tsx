@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { AnimatePresence, m } from "framer-motion";
+import { GraficoBarras, GraficoLinha } from "@/components/charts/GraficoSVG";
 import { CheckCircle2, ClipboardList, FileSearch, FlaskConical, Trophy, XCircle } from "lucide-react";
 import { Molecule2DStick } from "@/components/Molecule2DStick";
 import { useAuth } from "@/context/AuthContext";
@@ -45,14 +45,6 @@ const CANDIDATOS: { id: string; nome: string; smiles: string }[] = [
 ];
 const ORDEM_CANDIDATOS = [...CANDIDATOS].sort((a, b) => a.smiles.length - b.smiles.length || a.id.localeCompare(b.id));
 
-const tooltipStyle = {
-  background: "rgba(15,23,42,0.92)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: 8,
-  color: "#F8FAFC",
-  fontFamily: "'JetBrains Mono Variable', monospace",
-  fontSize: 12,
-};
 const fmt = (n: number, c = 2) => n.toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
 const MULT: Record<SinalH["mult"], string> = { s: "singleto", d: "dubleto", t: "tripleto", q: "quarteto", m: "multipleto" };
 
@@ -227,7 +219,7 @@ function Investigacao({
               </div>
               <AnimatePresence mode="wait">
                 {fb && (
-                  <motion.p
+                  <m.p
                     key={fb.texto}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -237,7 +229,7 @@ function Investigacao({
                   >
                     {fb.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
                     {fb.texto}
-                  </motion.p>
+                  </m.p>
                 )}
               </AnimatePresence>
               {acertou && <Laudo caso={caso} />}
@@ -283,37 +275,36 @@ function Tubo({ cor, feito }: { cor?: string; feito: boolean }) {
 function EspectroIV({ caso, onCarimbar }: { caso: CasoCSI; onCarimbar: (e: Evidencia) => void }) {
   const [vistos, setVistos] = useState<number[]>([]);
   const dados = useMemo(() => caso.ir.map(([x, t]) => ({ x, t })), [caso]);
+  const dadosXY = useMemo(() => caso.ir.map(([x, t]) => ({ x, y: t })), [caso]);
   const tDe = (x: number) => dados.reduce((m, d) => (Math.abs(d.x - x) < Math.abs(m.x - x) ? d : m), dados[0]).t;
   return (
     <div>
       <p className="mb-1 text-sm font-semibold">Espectro de infravermelho · %T × número de onda (cm⁻¹)</p>
       <p className="mb-2 text-xs text-muted">Clique nos marcadores das bandas para carimbar o grupo funcional.</p>
       <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={dados} margin={{ top: 10, right: 12, bottom: 4, left: -16 }}>
-            <CartesianGrid stroke="rgba(148,163,184,0.15)" />
-            <XAxis dataKey="x" type="number" reversed domain={[450, 4000]} ticks={[4000, 3500, 3000, 2500, 2000, 1500, 1000, 500]} tick={{ fontSize: 11, fill: "#94A3B8" }} />
-            <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#94A3B8" }} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} %T`, "Transmitância"]} labelFormatter={(l) => `${l} cm⁻¹`} />
-            <Line type="linear" dataKey="t" stroke="#06B6D4" strokeWidth={1.5} dot={false} isAnimationActive={false} />
-            {caso.irPicos.map((p) => (
-              <ReferenceDot
-                key={p.x}
-                x={p.x}
-                y={tDe(p.x)}
-                r={7}
-                fill={vistos.includes(p.x) ? "#10B981" : "#F43F5E"}
-                stroke="#F8FAFC"
-                strokeWidth={2}
-                style={{ cursor: "pointer" }}
-                onClick={() => {
-                  setVistos((v) => [...v, p.x]);
-                  onCarimbar({ chave: `iv-${p.x}`, fonte: "IV", texto: `${p.x} cm⁻¹: ${p.rotulo}` });
-                }}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+        <GraficoLinha
+          dados={dadosXY}
+          dominioX={[450, 4000]}
+          marcasX={[4000, 3500, 3000, 2500, 2000, 1500, 1000, 500]}
+          invertidoX
+          dominioY={[0, 100]}
+          cor="#06B6D4"
+          espessura={1.5}
+          curva="reta"
+          margens={{ top: 10, right: 12, bottom: 4, left: -16 }}
+          destaques={caso.irPicos.map((p) => ({
+            x: p.x,
+            y: tDe(p.x),
+            raio: 7,
+            cor: vistos.includes(p.x) ? "#10B981" : "#F43F5E",
+            rotulo: `${p.x} cm⁻¹`,
+            aoClicar: () => {
+              setVistos((v) => [...v, p.x]);
+              onCarimbar({ chave: `iv-${p.x}`, fonte: "IV", texto: `${p.x} cm⁻¹: ${p.rotulo}` });
+            },
+          }))}
+          dica={(pt) => [`${pt.x} cm⁻¹`, "Transmitância", `${pt.y} %T`]}
+        />
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {caso.irPicos.map((p) => (
@@ -347,19 +338,16 @@ function EspectroEM({ caso, onCarimbar }: { caso: CasoCSI; onCarimbar: (e: Evide
       <p className="mb-1 text-sm font-semibold">Espectro de massas (IE, 70 eV) · abundância relativa × m/z</p>
       <p className="mb-2 text-xs text-muted">Clique nas barras. Procure o íon molecular (maior m/z relevante), o pico base e padrões isotópicos (M+2).</p>
       <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={dados} margin={{ top: 10, right: 12, bottom: 4, left: -16 }}>
-            <CartesianGrid stroke="rgba(148,163,184,0.15)" vertical={false} />
-            <XAxis dataKey="mz" type="number" domain={[10, max + 10]} tick={{ fontSize: 11, fill: "#94A3B8" }} />
-            <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#94A3B8" }} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`, "abundância"]} labelFormatter={(l) => `m/z ${l}`} cursor={{ fill: "rgba(148,163,184,0.08)" }} />
-            <Bar dataKey="int" barSize={4} onClick={(d) => clicar((d as unknown as { mz: number }).mz, (d as unknown as { int: number }).int)} cursor="pointer">
-              {dados.map((d) => (
-                <Cell key={d.mz} fill={d.nota ? "#8B5CF6" : "#64748B"} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <GraficoBarras
+          modo="numerico"
+          dominioX={[10, max + 10]}
+          dominioY={[0, 100]}
+          larguraBarra={4}
+          margens={{ top: 10, right: 12, bottom: 4, left: -16 }}
+          barras={dados.map((d) => ({ chave: d.mz, x: d.mz, valor: d.int, cor: d.nota ? "#8B5CF6" : "#64748B" }))}
+          aoClicar={(b) => clicar(Number(b.x), b.valor)}
+          dica={(b) => [`m/z ${b.x}`, "abundância", `${b.valor}%`]}
+        />
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {caso.msNotas.map((n) => (
