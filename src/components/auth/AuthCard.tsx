@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { AtSign, Check, Circle, Eye, EyeOff, FlaskConical, GraduationCap, Hash, KeyRound, Loader2, LogIn, User, UserPlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { AuthError } from "@/lib/firebase";
@@ -130,7 +130,7 @@ export function AuthCard() {
         )}
 
         <AnimatePresence mode="wait">
-          <motion.div
+          <m.div
             key={`${perfil}-${tela}`}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -142,7 +142,7 @@ export function AuthCard() {
               <h2 className="text-xl font-bold">{s.titulo[tela]}</h2>
               <p className="text-sm text-muted">{s.subtitulo[tela]}</p>
             </div>
-          </motion.div>
+          </m.div>
         </AnimatePresence>
 
         {tela === "login" ? (

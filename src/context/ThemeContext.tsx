@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { CHAVE_TEMA } from "@/lib/scriptsIniciais";
 
 export type Theme = "dark" | "light";
 
@@ -10,10 +11,8 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
-const STORAGE_KEY = "chempharm:theme";
+const STORAGE_KEY = CHAVE_TEMA;
 
-/** Script inline no <head> que aplica o tema antes da primeira pintura (evita flash). */
-export const themeInitScript = `(function(){try{var t=localStorage.getItem('${STORAGE_KEY}');if(t!=='light'){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}}catch(e){document.documentElement.classList.add('dark')}})();`;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("dark");

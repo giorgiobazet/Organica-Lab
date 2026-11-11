@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { CheckCircle2, Lightbulb, RotateCcw, Trophy, Undo2, X, XCircle } from "lucide-react";
 import { Molecule2DStick } from "@/components/Molecule2DStick";
 import { Molecule3DViewer, type AtomHighlight, type AtomLabel } from "@/components/Molecule3DViewer";
@@ -190,7 +190,7 @@ export default function DeckbuilderAromaticos() {
             <Molecule3DViewer sdf={geo.sdf} preserveView spin={false} transparent={false} zoom={0.95} labels={labels} highlight={highlight} className="absolute inset-0" />
             <AnimatePresence>
               {pendente && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
@@ -208,13 +208,13 @@ export default function DeckbuilderAromaticos() {
                   <div className="mt-2 flex items-center gap-3">
                     <SeletorAnel anel={anel} posicoes={pendente.posicoes} onEscolher={(p) => registrar(aplicarSEAr(anel, pendente.carta.grupo!, p), pendente.carta, p)} />
                   </div>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </div>
           <AnimatePresence mode="wait">
             {fb && (
-              <motion.p
+              <m.p
                 key={fb.texto}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -230,7 +230,7 @@ export default function DeckbuilderAromaticos() {
                   {fb.texto}
                   {sintetizado && alvo.propriedade && <span className="mt-1 block text-xs opacity-80">{alvo.propriedade}</span>}
                 </span>
-              </motion.p>
+              </m.p>
             )}
           </AnimatePresence>
         </div>
@@ -239,7 +239,7 @@ export default function DeckbuilderAromaticos() {
       {/* Mão de cartas (2D) */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
         {CARTAS.map((c) => (
-          <motion.button
+          <m.button
             key={c.id}
             whileHover={{ y: sintetizado ? 0 : -4 }}
             onClick={() => jogar(c)}
@@ -252,7 +252,7 @@ export default function DeckbuilderAromaticos() {
             <span className={cn("chip text-[10px]", COR_TIPO[c.tipo])}>{c.tipo}</span>
             <span className="text-sm font-semibold leading-tight">{c.nome}</span>
             <span className="mt-auto font-mono text-xs text-muted">{c.reagentes}</span>
-          </motion.button>
+          </m.button>
         ))}
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GLViewer } from "3dmol";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { ArrowRight, CheckCircle2, Compass, Eye, RotateCw, Trophy, XCircle } from "lucide-react";
 import { Molecule3DViewer, type AtomHighlight, type AtomLabel } from "@/components/Molecule3DViewer";
 import { useAuth } from "@/context/AuthContext";
@@ -136,7 +136,7 @@ function FeedbackBox({ fb }: { fb: Feedback }) {
   return (
     <AnimatePresence mode="wait">
       {fb && (
-        <motion.p
+        <m.p
           key={fb.texto}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -146,7 +146,7 @@ function FeedbackBox({ fb }: { fb: Feedback }) {
         >
           {fb.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
           {fb.texto}
-        </motion.p>
+        </m.p>
       )}
     </AnimatePresence>
   );

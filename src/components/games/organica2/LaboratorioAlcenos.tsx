@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { ArrowRight, CheckCircle2, MoveRight, Trophy, XCircle } from "lucide-react";
 import { Molecule2DStick } from "@/components/Molecule2DStick";
 import { Molecule3DViewer } from "@/components/Molecule3DViewer";
@@ -130,7 +130,7 @@ export default function LaboratorioAlcenos() {
 
       <AnimatePresence mode="wait">
         {(resolvida || erradas.length > 0) && (
-          <motion.div key={`${q.id}-${resolvida}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+          <m.div key={`${q.id}-${resolvida}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             {resolvida ? (
               <div className={cn("grid gap-4", sdf3d && "lg:grid-cols-[1fr_1.1fr]")}>
                 <div className="glass space-y-3 p-4">
@@ -165,7 +165,7 @@ export default function LaboratorioAlcenos() {
                     : "Ainda não. Em meio básico manda o impedimento estérico; em meio ácido, a estabilidade da carga positiva."}
               </p>
             )}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

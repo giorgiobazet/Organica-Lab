@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { FlaskConical, Loader2, Moon, Sun } from "lucide-react";
+import { m } from "framer-motion";
+import { Box, FlaskConical, Loader2, Moon, Sun } from "lucide-react";
 import { Molecule3DViewer } from "@/components/Molecule3DViewer";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { VerifyEmailGate } from "@/components/auth/VerifyEmailGate";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
+import { BotaoModoLeve } from "@/components/BotaoModoLeve";
+import { useLeve } from "@/context/LeveContext";
 import { MOLECULES_3D } from "@/data/molecules3d";
 import { cn } from "@/lib/utils";
 import { SITE } from "@/config/site";
@@ -34,12 +36,25 @@ export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [idx, setIdx] = useState(0);
+  // O 3D entra depois da primeira pintura (ou no toque, no Modo Leve); até lá, um pôster estático
+  // da mesma molécula ocupa o lugar. "pronto3D" guarda a molécula já desenhada pelo visualizador.
+  const { leve } = useLeve();
+  const [ativar3D, setAtivar3D] = useState(false);
+  const [pronto3D, setPronto3D] = useState<string | null>(null);
   const atual = DESTAQUES[idx];
   const mol = MOLECULES_3D[atual.key];
 
   useEffect(() => {
     if (status === "verified") router.replace("/hub");
   }, [status, router]);
+
+  useEffect(() => {
+    if (document.documentElement.classList.contains("leve")) return;
+    const ocioso = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 400));
+    const cancelar = window.cancelIdleCallback ?? window.clearTimeout;
+    const id = ocioso(() => setAtivar3D(true), { timeout: 2500 });
+    return () => cancelar(id);
+  }, []);
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.15fr_1fr]">
@@ -58,17 +73,40 @@ export default function Home() {
               {SITE.marca.base}<span className="titulo-marca text-chem-primary">{SITE.marca.destaque}</span>
             </span>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="btn-ghost !p-2 text-muted"
-            aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <BotaoModoLeve />
+            <button
+              onClick={toggleTheme}
+              className="btn-ghost !p-2 text-muted"
+              aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+          </div>
         </header>
 
         <div className="relative z-10 min-h-[300px] flex-1">
-          <Molecule3DViewer cid={atual.cid} cacheKey={atual.key} className="absolute inset-0" />
+          {/* Pôster: imagem gerada do próprio visualizador, na orientação inicial da molécula. */}
+          <div
+            className={cn(
+              "poster-3d pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-500",
+              pronto3D === atual.key ? "opacity-0" : "opacity-100",
+            )}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/moleculas/${atual.key}.webp`} alt={`${mol.nome} em 3D`} className="aspect-square h-full max-h-full max-w-full object-contain" />
+          </div>
+          {ativar3D ? (
+            <div className={cn("absolute inset-0 transition-opacity duration-500", pronto3D === atual.key ? "opacity-100" : "opacity-0")}>
+              <Molecule3DViewer cid={atual.cid} cacheKey={atual.key} className="absolute inset-0" onCarregado={() => setPronto3D(atual.key)} />
+            </div>
+          ) : (
+            leve && (
+              <button onClick={() => setAtivar3D(true)} className="btn-ghost absolute bottom-3 left-1/2 -translate-x-1/2 bg-ui-surface/80 text-sm">
+                <Box className="h-4 w-4" /> Ver em 3D
+              </button>
+            )
+          )}
         </div>
 
         <div className="relative z-10 p-6">
@@ -105,7 +143,7 @@ export default function Home() {
         <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-chem-orbital/15 blur-3xl decor" />
         <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-chem-primary/15 blur-3xl decor" />
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -138,7 +176,7 @@ export default function Home() {
             </p>
           )}
           <Rodape className="pb-0 pt-2" />
-        </motion.div>
+        </m.div>
       </section>
     </main>
   );

@@ -2,10 +2,11 @@
 
 import { SITE } from "@/config/site";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { FlaskConical, LogOut, Moon, Sun } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
+import { BotaoModoLeve } from "@/components/BotaoModoLeve";
 import { nivelDoXp } from "@/lib/validation";
 
 export function LabHeader() {
@@ -36,7 +37,7 @@ export function LabHeader() {
           <span className="chip shrink-0 bg-chem-primary/15 font-mono text-chem-primary">Nv. {nivel}</span>
           <div className="flex-1">
             <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10" role="progressbar" aria-valuemin={0} aria-valuemax={xpParaProximo} aria-valuenow={xpNoNivel} aria-label="XP no nível atual">
-              <motion.div
+              <m.div
                 className="h-full rounded-full bg-gradient-to-r from-chem-primary to-chem-orbital"
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.max(progresso * 100, 2)}%` }}
@@ -57,6 +58,7 @@ export function LabHeader() {
               Matrícula {profile?.matricula ?? "—"}
             </p>
           </div>
+          <BotaoModoLeve />
           <button
             onClick={toggleTheme}
             className="btn-ghost !p-2 text-muted"

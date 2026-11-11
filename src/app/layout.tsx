@@ -4,7 +4,9 @@ import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import { SITE } from "@/config/site";
 import { AuthProvider } from "@/context/AuthContext";
-import { ThemeProvider, themeInitScript } from "@/context/ThemeContext";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { LeveProvider } from "@/context/LeveContext";
+import { leveInitScript, themeInitScript } from "@/lib/scriptsIniciais";
 
 export const metadata: Metadata = {
   title: SITE.nome,
@@ -21,11 +23,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript + leveInitScript }} />
       </head>
       <body className="min-h-screen font-sans">
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <LeveProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </LeveProvider>
         </ThemeProvider>
       </body>
     </html>

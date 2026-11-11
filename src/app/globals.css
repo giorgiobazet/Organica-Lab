@@ -171,3 +171,35 @@
     background-image: linear-gradient(120deg, #8b5cf6, #6d28d9);
   }
 }
+
+/* ---------- Modo Leve (aparelhos menos potentes) ----------
+ * Mesmo conteúdo e mesmas cores; sai só o que custa caro para a placa de vídeo:
+ * desfoque de fundo, manchas de brilho desfocadas, fundo fixo e transições. */
+html.leve body {
+  background-attachment: scroll;
+}
+html.leve .glass,
+html.leve .glass-strong,
+html.leve .glass-soft,
+html.leve .aba-pasta {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: rgb(var(--surface) / 0.97);
+  box-shadow: none;
+}
+html.leve .decor {
+  display: none;
+}
+html.leve *,
+html.leve *::before,
+html.leve *::after {
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
+  animation-iteration-count: 1 !important;
+}
+html.leve .backdrop-blur-md,
+html.leve .backdrop-blur-sm,
+html.leve .backdrop-blur {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

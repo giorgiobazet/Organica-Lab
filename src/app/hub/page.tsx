@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowRight, ArrowUpRight, Gamepad2, History, Sparkles, Trophy, Zap } from "lucide-react";
 import { LabHeader } from "@/components/LabHeader";
 import { Molecule2DStick } from "@/components/Molecule2DStick";
@@ -42,7 +42,7 @@ function HubContent() {
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-grade [mask-image:linear-gradient(to_bottom,black,transparent)]" />
 
       {/* Hero */}
-      <motion.section
+      <m.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
@@ -81,7 +81,7 @@ function HubContent() {
             <Stat icon={<Gamepad2 className="h-4 w-4" />} label="Jogos" value={`${concluidos}/${TOTAL_JOGOS}`} tone="text-chem-success" />
           </div>
         </div>
-      </motion.section>
+      </m.section>
 
       {/* Bento grid das 4 disciplinas */}
       <section className="mt-10">
@@ -119,7 +119,7 @@ function DisciplinaCard({ d, span, delay, concluidos }: { d: Disciplina; span: s
   const modos = Array.from(new Set(d.jogos.map((j) => j.modo)));
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay }}
@@ -163,6 +163,6 @@ function DisciplinaCard({ d, span, delay, concluidos }: { d: Disciplina; span: s
           <Molecule2DStick smiles={d.destaque.smiles} width={wide ? 240 : 220} height={140} explicitHydrogens={false} label={d.destaque.nome} />
         </div>
       </Link>
-    </motion.div>
+    </m.div>
   );
 }

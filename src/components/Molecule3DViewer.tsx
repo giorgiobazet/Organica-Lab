@@ -65,6 +65,8 @@ export interface Molecule3DViewerProps {
   labels?: AtomLabel[];
   /** Esferas livres desenhadas junto da molécula. */
   esferas?: ShapeSphere[];
+  /** Chamado sempre que uma molécula termina de ser desenhada (ex.: para trocar um pôster pelo 3D). */
+  onCarregado?: () => void;
 }
 
 type Source =
@@ -153,6 +155,7 @@ export function Molecule3DViewer({
   zoom = 0.9,
   labels,
   esferas,
+  onCarregado,
 }: Molecule3DViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<GLViewer | null>(null);
@@ -160,6 +163,8 @@ export function Molecule3DViewer({
   const [style, setStyle] = useState<MoleculeStyle>(initialStyle);
   const [surface, setSurface] = useState<MoleculeSurface>(initialSurface);
   const [spinning, setSpinning] = useState(spin);
+  // Fora da tela, a rotação para (poupa CPU/GPU); no Modo Leve começa parada.
+  const [visivel, setVisivel] = useState(true);
   const [source, setSource] = useState<Source>({ kind: "none" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,28 +176,35 @@ export function Molecule3DViewer({
   labelsRef.current = labels;
   const esferasRef = useRef<ShapeSphere[] | undefined>(esferas);
   esferasRef.current = esferas;
+  const onCarregadoRef = useRef(onCarregado);
+  onCarregadoRef.current = onCarregado;
   const highlightKey = JSON.stringify([highlight ?? [], labels ?? [], esferas ?? []]);
 
   // Cria o viewer uma única vez (3Dmol depende de window/WebGL: só no cliente).
   useEffect(() => {
     let disposed = false;
     let observer: ResizeObserver | null = null;
+    let visibilidade: IntersectionObserver | null = null;
+    if (document.documentElement.classList.contains("leve")) setSpinning(false);
     import("3dmol").then(($3Dmol) => {
       if (disposed || !containerRef.current) return;
       const viewer = $3Dmol.createViewer(containerRef.current, {
         backgroundColor: transparent ? "black" : fundoOpaco(),
         backgroundAlpha: transparent ? 0 : 1,
-        antialias: true,
+        antialias: !document.documentElement.classList.contains("leve"),
       });
       viewerRef.current = viewer;
       observer = new ResizeObserver(() => viewer.resize());
       observer.observe(containerRef.current);
+      visibilidade = new IntersectionObserver(([e]) => setVisivel(e.isIntersecting));
+      visibilidade.observe(containerRef.current);
       setReady(true);
       onViewerReady?.(viewer);
     });
     return () => {
       disposed = true;
       observer?.disconnect();
+      visibilidade?.disconnect();
       viewerRef.current?.clear();
       viewerRef.current = null;
     };
@@ -230,6 +242,7 @@ export function Molecule3DViewer({
       hasModel.current = true;
       setSource(src);
       setError(null);
+      onCarregadoRef.current?.();
     };
 
     if (sdf) {
@@ -268,9 +281,9 @@ export function Molecule3DViewer({
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!ready || !viewer) return;
-    if (spinning) viewer.spin("y", 0.6);
+    if (spinning && visivel) viewer.spin("y", 0.6);
     else viewer.spin(false);
-  }, [ready, spinning]);
+  }, [ready, spinning, visivel]);
 
   const resetView = () => {
     const viewer = viewerRef.current;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { ArrowRight, CheckCircle2, FlaskConical, Pause, Play, RotateCcw, Trophy, XCircle } from "lucide-react";
 import { Molecule2DStick } from "@/components/Molecule2DStick";
 import { Molecule3DViewer } from "@/components/Molecule3DViewer";
@@ -151,7 +151,7 @@ function PainelCenario({ c, jaFeito, onFeito, onProximo }: { c: Cenario; jaFeito
           )}
           <AnimatePresence mode="wait">
             {fb && (
-              <motion.p
+              <m.p
                 key={fb.texto}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -161,7 +161,7 @@ function PainelCenario({ c, jaFeito, onFeito, onProximo }: { c: Cenario; jaFeito
               >
                 {fb.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
                 {fb.texto}
-              </motion.p>
+              </m.p>
             )}
           </AnimatePresence>
           {etapa === "feito" && onProximo && (

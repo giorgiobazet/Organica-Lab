@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ArrowLeft, BookOpen, CheckCircle2, Eye, Gamepad2, LayoutGrid, Lock, Play } from "lucide-react";
 import { LabHeader } from "@/components/LabHeader";
 import { Rodape } from "@/components/Rodape";
@@ -72,7 +72,7 @@ function ModuleContent({ id }: { id: DisciplinaId }) {
         <ArrowLeft className="h-4 w-4" /> Voltar ao Hub
       </Link>
 
-      <motion.section
+      <m.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn("glass tinta relative mt-4 overflow-hidden bg-gradient-to-br to-transparent p-6", cor.gradient)}
@@ -90,7 +90,7 @@ function ModuleContent({ id }: { id: DisciplinaId }) {
           <Eye className={cn("mt-0.5 h-4 w-4 shrink-0", cor.text)} />
           <span>{d.regraVisual}</span>
         </p>
-      </motion.section>
+      </m.section>
 
       {/* Abas: visão geral + jogos */}
       <nav className="mt-5 flex gap-1.5 overflow-x-auto pb-1" aria-label="Jogos da disciplina">
@@ -211,7 +211,7 @@ function VisaoGeral({ d, concluidos, onJogar }: { d: Disciplina; concluidos: Set
           {d.jogos.map((j, i) => {
             const disponivel = Boolean(JOGOS_DISPONIVEIS[j.id]);
             return (
-              <motion.article
+              <m.article
                 key={j.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -247,7 +247,7 @@ function VisaoGeral({ d, concluidos, onJogar }: { d: Disciplina; concluidos: Set
                     </button>
                   )}
                 </div>
-              </motion.article>
+              </m.article>
             );
           })}
         </div>
