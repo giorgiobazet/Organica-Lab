@@ -1,65 +1,191 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AtSign, Check, Circle, Eye, EyeOff, Hash, KeyRound, Loader2, LogIn, User, UserPlus } from "lucide-react";
+import { AtSign, Check, Circle, Eye, EyeOff, FlaskConical, GraduationCap, Hash, KeyRound, Loader2, LogIn, User, UserPlus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { AuthError } from "@/lib/firebase";
-import { EXEMPLO_MATRICULA, MATRICULA_MAX, REQUISITOS_SENHA, ROTULO_PERFIL, perfilDaMatricula, validarCadastro, validarEmail, type CadastroErrors, type CadastroInput } from "@/lib/validation";
+import {
+  EXEMPLO_MATRICULA,
+  MATRICULA_MAX_PERFIL,
+  REQUISITOS_SENHA,
+  mascaraMatricula,
+  validarCadastro,
+  validarEmail,
+  type CadastroErrors,
+  type CadastroInput,
+  type Perfil,
+} from "@/lib/validation";
 import { cn } from "@/lib/utils";
 
-type Tab = "login" | "cadastro";
+type Tela = "login" | "cadastro";
+
+/** Textos e cores de cada sessão: ciano para aluno, violeta para professor/técnico. */
+const SESSAO: Record<
+  Perfil,
+  {
+    aba: string;
+    icone: typeof GraduationCap;
+    selo: string;
+    titulo: Record<Tela, string>;
+    subtitulo: Record<Tela, string>;
+    entrar: string;
+    criar: string;
+    rotuloMatricula: string;
+    dicaMatricula: string;
+  }
+> = {
+  aluno: {
+    aba: "Aluno",
+    icone: GraduationCap,
+    selo: "Sessão do aluno",
+    titulo: { login: "Bem-vindo(a) ao laboratório", cadastro: "Cadastro de aluno" },
+    subtitulo: {
+      login: "Use o e-mail e a senha da sua conta de aluno.",
+      cadastro: "Enviaremos um link de verificação para o seu e-mail.",
+    },
+    entrar: "Entrar como aluno",
+    criar: "Criar conta de aluno",
+    rotuloMatricula: "Matrícula (12 dígitos)",
+    dicaMatricula: "A matrícula de aluno tem 12 dígitos.",
+  },
+  servidor: {
+    aba: "Professor / Técnico",
+    icone: FlaskConical,
+    selo: "Sessão do servidor",
+    titulo: { login: "Acesso de professores e técnicos", cadastro: "Cadastro de professor ou técnico" },
+    subtitulo: {
+      login: "Use o e-mail e a senha da sua conta de servidor.",
+      cadastro: "Enviaremos um link de verificação para o seu e-mail.",
+    },
+    entrar: "Entrar como professor/técnico",
+    criar: "Criar conta de servidor",
+    rotuloMatricula: "Matrícula funcional",
+    dicaMatricula: "Formato 00000-0; o hífen entra sozinho.",
+  },
+};
+
+const ORDEM: Perfil[] = ["aluno", "servidor"];
+const LS_SESSAO = "organicalab:sessao-login";
 
 export function AuthCard() {
-  const [tab, setTab] = useState<Tab>("login");
+  const [perfil, setPerfil] = useState<Perfil>("aluno");
+  const [tela, setTela] = useState<Tela>("login");
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  // Lembra a última aba usada neste navegador (só conveniência).
+  useEffect(() => {
+    try {
+      const salvo = window.localStorage.getItem(LS_SESSAO);
+      if (salvo === "aluno" || salvo === "servidor") setPerfil(salvo);
+    } catch {
+      /* armazenamento indisponível: fica na aba Aluno */
+    }
+  }, []);
+
+  const trocarPerfil = (p: Perfil, mensagem: string | null = null) => {
+    setPerfil(p);
+    setAviso(mensagem);
+    try {
+      window.localStorage.setItem(LS_SESSAO, p);
+    } catch {
+      /* ignora */
+    }
+  };
+
+  const s = SESSAO[perfil];
 
   return (
-    <div className="glass-strong w-full max-w-md p-6 sm:p-8">
-      <div className="mb-6 grid grid-cols-2 gap-1 rounded-xl bg-slate-200/60 p-1 dark:bg-ui-bg/60" role="tablist">
-        {(["login", "cadastro"] as const).map((t) => (
-          <button
-            key={t}
-            role="tab"
-            aria-selected={tab === t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "relative rounded-lg py-2 text-sm font-semibold transition",
-              tab === t ? "text-lab-background" : "text-muted hover:text-chem-primary",
-            )}
-          >
-            {tab === t && (
-              <motion.span
-                layoutId="auth-tab"
-                className="absolute inset-0 rounded-lg bg-chem-primary"
-                transition={{ type: "spring", stiffness: 420, damping: 34 }}
-              />
-            )}
-            <span className="relative">{t === "login" ? "Login" : "Cadastro Universitário"}</span>
-          </button>
-        ))}
+    <div className="w-full max-w-md">
+      <div className="flex gap-1.5 pl-4" role="tablist" aria-label="Tipo de acesso">
+        {ORDEM.map((p) => {
+          const Icone = SESSAO[p].icone;
+          const ativo = perfil === p;
+          return (
+            <button
+              key={p}
+              type="button"
+              role="tab"
+              aria-selected={ativo}
+              onClick={() => trocarPerfil(p)}
+              className={cn("aba-pasta", p === "servidor" && "aba-servidor")}
+            >
+              <Icone className="h-4 w-4" />
+              {SESSAO[p].aba}
+            </button>
+          );
+        })}
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={tab}
-          initial={{ opacity: 0, x: tab === "login" ? -16 : 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: tab === "login" ? 16 : -16 }}
-          transition={{ duration: 0.18 }}
-        >
-          {tab === "login" ? <LoginForm onSwitch={() => setTab("cadastro")} /> : <CadastroForm onSwitch={() => setTab("login")} />}
-        </motion.div>
-      </AnimatePresence>
+      <div className={cn("glass-strong p-6 sm:p-8", perfil === "aluno" ? "cartao-aluno" : "cartao-servidor")} role="tabpanel">
+        <span className={cn("chip", perfil === "aluno" ? "bg-chem-primary/15 text-chem-primary" : "bg-chem-orbital/15 text-chem-orbital")}>
+          <s.icone className="h-3.5 w-3.5" />
+          {s.selo}
+        </span>
+
+        {aviso && (
+          <p className="mt-3 rounded-lg bg-chem-orbital/10 px-3 py-2 text-sm text-chem-orbital" role="status">
+            {aviso}
+          </p>
+        )}
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${perfil}-${tela}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.16 }}
+            className="mt-3"
+          >
+            <div className="mb-4">
+              <h2 className="text-xl font-bold">{s.titulo[tela]}</h2>
+              <p className="text-sm text-muted">{s.subtitulo[tela]}</p>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {tela === "login" ? (
+          <LoginForm
+            perfil={perfil}
+            onCriar={() => {
+              setAviso(null);
+              setTela("cadastro");
+            }}
+            onPerfilDiferente={(correto, msg) => trocarPerfil(correto, msg)}
+          />
+        ) : (
+          <CadastroForm
+            key={perfil}
+            perfil={perfil}
+            onEntrar={() => {
+              setAviso(null);
+              setTela("login");
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-function LoginForm({ onSwitch }: { onSwitch: () => void }) {
+function LoginForm({
+  perfil,
+  onCriar,
+  onPerfilDiferente,
+}: {
+  perfil: Perfil;
+  onCriar: () => void;
+  onPerfilDiferente: (correto: Perfil, mensagem: string) => void;
+}) {
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const s = SESSAO[perfil];
+
+  useEffect(() => setErro(null), [perfil]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,9 +195,15 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
     setEnviando(true);
     setErro(null);
     try {
-      await signIn(email, senha);
+      await signIn(email, senha, perfil);
     } catch (err) {
-      setErro(err instanceof AuthError ? err.message : "Não foi possível entrar.");
+      if (err instanceof AuthError && err.code === "app/perfil-diferente") {
+        // E-mail e senha continuam preenchidos: basta clicar em Entrar na aba certa.
+        const correto: Perfil = perfil === "aluno" ? "servidor" : "aluno";
+        onPerfilDiferente(correto, `${err.message} Mudamos para a aba ${SESSAO[correto].aba}: é só clicar em Entrar.`);
+      } else {
+        setErro(err instanceof AuthError ? err.message : "Não foi possível entrar.");
+      }
     } finally {
       setEnviando(false);
     }
@@ -79,10 +211,6 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <div>
-        <h2 className="text-xl font-bold">Entrar no Laboratório</h2>
-        <p className="text-sm text-muted">Use o e-mail e a senha do seu cadastro.</p>
-      </div>
       <Field icon={<AtSign className="h-4 w-4" />} label="E-mail">
         <input className="lab-input pl-9" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu.email@exemplo.com" />
       </Field>
@@ -90,36 +218,37 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
         <CampoSenha value={senha} onChange={setSenha} autoComplete="current-password" />
       </Field>
       {erro && <p className="rounded-lg bg-chem-danger/10 px-3 py-2 text-sm text-chem-danger" role="alert">{erro}</p>}
-      <button type="submit" className="btn-primary w-full" disabled={enviando}>
+      <button type="submit" className={cn("btn-primary w-full", perfil === "servidor" && "btn-servidor")} disabled={enviando}>
         {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
-        Entrar
+        {s.entrar}
       </button>
       <p className="text-center text-sm text-muted">
-        Primeira vez?{" "}
-        <button type="button" onClick={onSwitch} className="font-semibold text-chem-primary hover:underline">
-          Faça seu cadastro
+        Ainda não tem conta?{" "}
+        <button type="button" onClick={onCriar} className={cn("font-semibold hover:underline", perfil === "aluno" ? "text-chem-primary" : "text-chem-orbital")}>
+          {s.criar}
         </button>
       </p>
     </form>
   );
 }
 
-function CadastroForm({ onSwitch }: { onSwitch: () => void }) {
+function CadastroForm({ perfil, onEntrar }: { perfil: Perfil; onEntrar: () => void }) {
   const { signUp } = useAuth();
   const [form, setForm] = useState<CadastroInput>({ nome: "", email: "", matricula: "", senha: "" });
   const [errors, setErrors] = useState<CadastroErrors>({});
   const [erroGeral, setErroGeral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const s = SESSAO[perfil];
 
   const set = (k: keyof CadastroInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = k === "matricula" ? e.target.value.replace(/[^\d-]/g, "").slice(0, MATRICULA_MAX) : e.target.value;
+    const value = k === "matricula" ? mascaraMatricula(e.target.value, perfil) : e.target.value;
     setForm((f) => ({ ...f, [k]: value }));
     if (errors[k]) setErrors((er) => ({ ...er, [k]: undefined }));
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const v = validarCadastro(form);
+    const v = validarCadastro(form, perfil);
     setErrors(v);
     if (Object.keys(v).length) return;
     setEnviando(true);
@@ -135,35 +264,24 @@ function CadastroForm({ onSwitch }: { onSwitch: () => void }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-3.5" noValidate>
-      <div>
-        <h2 className="text-xl font-bold">Cadastro Universitário</h2>
-        <p className="text-sm text-muted">Enviaremos um link de verificação para o seu e-mail.</p>
-      </div>
       <Field icon={<User className="h-4 w-4" />} label="Nome completo" error={errors.nome}>
         <input className="lab-input pl-9" autoComplete="name" value={form.nome} onChange={set("nome")} placeholder="Nome e sobrenome" />
       </Field>
       <Field icon={<AtSign className="h-4 w-4" />} label="E-mail institucional ou pessoal" error={errors.email}>
         <input className="lab-input pl-9" type="email" autoComplete="email" value={form.email} onChange={set("email")} placeholder="seu.email@exemplo.com" />
       </Field>
-      <Field icon={<Hash className="h-4 w-4" />} label="Matrícula" error={errors.matricula}>
+      <Field icon={<Hash className="h-4 w-4" />} label={s.rotuloMatricula} error={errors.matricula}>
         <input
           className="lab-input pl-9 font-mono"
           inputMode="numeric"
           autoComplete="off"
-          maxLength={MATRICULA_MAX}
+          maxLength={MATRICULA_MAX_PERFIL[perfil]}
           value={form.matricula}
           onChange={set("matricula")}
-          placeholder={EXEMPLO_MATRICULA.aluno}
+          placeholder={EXEMPLO_MATRICULA[perfil]}
         />
       </Field>
-      <p className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-        <span>
-          Aluno: 12 dígitos · Professor/técnico: <span className="font-mono">{EXEMPLO_MATRICULA.servidor}</span>
-        </span>
-        {perfilDaMatricula(form.matricula) && (
-          <span className="chip bg-chem-primary/15 text-chem-primary">Perfil: {ROTULO_PERFIL[perfilDaMatricula(form.matricula)!]}</span>
-        )}
-      </p>
+      {!errors.matricula && <p className="-mt-2 text-xs text-muted">{s.dicaMatricula}</p>}
       <Field icon={<KeyRound className="h-4 w-4" />} label="Senha" error={errors.senha}>
         <CampoSenha value={form.senha} onChange={(v) => setForm((f) => ({ ...f, senha: v }))} autoComplete="new-password" />
       </Field>
@@ -179,13 +297,13 @@ function CadastroForm({ onSwitch }: { onSwitch: () => void }) {
         })}
       </ul>
       {erroGeral && <p className="rounded-lg bg-chem-danger/10 px-3 py-2 text-sm text-chem-danger" role="alert">{erroGeral}</p>}
-      <button type="submit" className="btn-primary w-full" disabled={enviando}>
+      <button type="submit" className={cn("btn-primary w-full", perfil === "servidor" && "btn-servidor")} disabled={enviando}>
         {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-        Criar conta
+        {s.criar}
       </button>
       <p className="text-center text-sm text-muted">
         Já tem conta?{" "}
-        <button type="button" onClick={onSwitch} className="font-semibold text-chem-primary hover:underline">
+        <button type="button" onClick={onEntrar} className={cn("font-semibold hover:underline", perfil === "aluno" ? "text-chem-primary" : "text-chem-orbital")}>
           Entrar
         </button>
       </p>

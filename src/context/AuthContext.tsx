@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
+  AuthError,
   getAuthBackend,
   type AppUser,
   type AuthBackend,
@@ -9,7 +10,7 @@ import {
   type UltimoExperimento,
   type UserProfile,
 } from "@/lib/firebase";
-import type { CadastroInput } from "@/lib/validation";
+import { ROTULO_PERFIL, type CadastroInput, type Perfil } from "@/lib/validation";
 
 export type AuthStatus = "loading" | "signedOut" | "unverified" | "verified";
 
@@ -19,7 +20,11 @@ interface AuthContextValue {
   user: AppUser | null;
   profile: UserProfile | null;
   signUp(input: CadastroInput): Promise<void>;
-  signIn(email: string, senha: string): Promise<void>;
+  /**
+   * Entra com e-mail e senha. Com `perfilEsperado` (a aba escolhida na tela de login), confere o
+   * perfil salvo no cadastro: se for outro, desfaz o login e lança AuthError("app/perfil-diferente").
+   */
+  signIn(email: string, senha: string, perfilEsperado?: Perfil): Promise<void>;
   signOut(): Promise<void>;
   resendVerification(): Promise<void>;
   /** Recarrega o status de verificação; devolve true se o e-mail já foi verificado. */
@@ -48,13 +53,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
+  // Enquanto o login confere o perfil, o ouvinte do provedor não publica o usuário (evita
+  // redirecionar para o Hub uma conta que ainda pode ser desconectada).
+  const conferindoPerfil = useRef(false);
 
   useEffect(() => {
     const b = getAuthBackend();
     setBackend(b);
     return b.onAuthChange(async (u) => {
+      if (conferindoPerfil.current) return;
+      const p = u ? await b.getProfile(u.uid) : null;
+      if (conferindoPerfil.current) return;
       setUser(u);
-      setProfile(u ? await b.getProfile(u.uid) : null);
+      setProfile(p);
       setStatus(statusOf(u));
     });
   }, []);
@@ -76,12 +87,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signIn = useCallback(
-    async (email: string, senha: string) => {
+    async (email: string, senha: string, perfilEsperado?: Perfil) => {
       const b = requireBackend();
-      const u = await b.signIn(email, senha);
-      setUser(u);
-      setProfile(await b.getProfile(u.uid));
-      setStatus(statusOf(u));
+      conferindoPerfil.current = Boolean(perfilEsperado);
+      try {
+        const u = await b.signIn(email, senha);
+        const p = await b.getProfile(u.uid);
+        const perfilConta: Perfil = p?.perfil ?? "aluno"; // perfis antigos, sem o campo, são de alunos
+        if (perfilEsperado && p && perfilConta !== perfilEsperado) {
+          await b.signOut();
+          throw new AuthError(
+            "app/perfil-diferente",
+            `Esta conta está cadastrada como ${ROTULO_PERFIL[perfilConta]}.`,
+          );
+        }
+        setUser(u);
+        setProfile(p);
+        setStatus(statusOf(u));
+      } finally {
+        conferindoPerfil.current = false;
+      }
     },
     [requireBackend],
   );
