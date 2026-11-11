@@ -85,7 +85,7 @@ function HubContent() {
 
       {/* Bento grid das 4 disciplinas */}
       <section className="mt-10">
-        <div className="mb-4 flex items-end justify-between">
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="text-xl font-bold">Disciplinas</h2>
           <p className="text-sm text-muted">Selecione um módulo para entrar no laboratório.</p>
         </div>
