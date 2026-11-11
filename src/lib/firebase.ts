@@ -20,7 +20,7 @@ import {
   type Auth,
   type User,
 } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, type Firestore } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, type Firestore } from "firebase/firestore/lite";
 import { perfilDaMatricula, type CadastroInput, type Perfil } from "./validation";
 
 // ---------------------------------------------------------------------------
