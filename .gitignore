@@ -10,3 +10,6 @@ next-env.d.ts
 
 # Dados da OpenChemLib copiados de node_modules no build
 /public/ocl/
+
+# Emuladores do Firebase
+*-debug.log

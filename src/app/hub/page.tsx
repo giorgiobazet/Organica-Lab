@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { m } from "framer-motion";
-import { ArrowRight, ArrowUpRight, FlaskRound, Gamepad2, History, ListOrdered, Ruler, Sparkles, Trophy, Zap } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BadgeCheck, FlaskRound, School, ShieldCheck, Gamepad2, History, ListOrdered, Ruler, Sparkles, Trophy, Zap } from "lucide-react";
 import { LabHeader } from "@/components/LabHeader";
 import { Molecule2DStick } from "@/components/Molecule2DStick";
 import { RequireVerified } from "@/components/RequireVerified";
@@ -13,6 +13,7 @@ import { nivelDoXp } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 import { SITE } from "@/config/site";
 import { Rodape } from "@/components/Rodape";
+import { MinhasTurmas } from "@/components/turmas/MinhasTurmas";
 
 const TOTAL_JOGOS = DISCIPLINAS.reduce((n, d) => n + d.jogos.length, 0);
 
@@ -29,7 +30,7 @@ export default function HubPage() {
 }
 
 function HubContent() {
-  const { profile } = useAuth();
+  const { profile, papel } = useAuth();
   const xp = profile?.xp ?? 0;
   const { nivel } = nivelDoXp(xp);
   const primeiroNome = profile?.nome.split(" ")[0] ?? "";
@@ -106,6 +107,46 @@ function HubContent() {
         </div>
         <ArrowRight className="hidden h-5 w-5 text-chem-primary transition group-hover:translate-x-1 sm:block" />
       </Link>
+
+      {/* Professores (com validação) e administrador */}
+      {(profile?.perfil === "servidor" || papel.admin) && (
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {profile?.perfil === "servidor" && (
+            <Link href="/professor" className="glass group flex items-center gap-4 p-5 transition hover:border-chem-orbital/60">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-chem-orbital/15 text-chem-orbital">
+                <School className="h-6 w-6" />
+              </span>
+              <div className="flex-1">
+                <p className="flex flex-wrap items-center gap-2 text-lg font-bold">
+                  Painel do professor
+                  {papel.professor === "aprovado" && <span className="chip bg-chem-success/15 text-chem-success"><BadgeCheck className="h-3.5 w-3.5" /> verificado</span>}
+                  {papel.professor === "pendente" && <span className="chip bg-chem-orbital/15 text-chem-orbital">validação em análise</span>}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {papel.professor === "aprovado"
+                    ? "Crie turmas, indique jogos e Listas da Aula e acompanhe o progresso de cada aluno."
+                    : "Peça a validação de professor para criar turmas e acompanhar os alunos."}
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-chem-orbital transition group-hover:translate-x-1" />
+            </Link>
+          )}
+          {papel.admin && (
+            <Link href="/admin" className="glass group flex items-center gap-4 p-5 transition hover:border-chem-primary/60">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-chem-primary/15 text-chem-primary">
+                <ShieldCheck className="h-6 w-6" />
+              </span>
+              <div className="flex-1">
+                <p className="text-lg font-bold">Administração</p>
+                <p className="mt-1 text-sm text-muted">Aprovar ou recusar pedidos de validação de professores.</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-chem-primary transition group-hover:translate-x-1" />
+            </Link>
+          )}
+        </div>
+      )}
+
+      {profile?.perfil !== "servidor" && <MinhasTurmas />}
 
       {/* Bento grid das 4 disciplinas */}
       <section className="mt-10">

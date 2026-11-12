@@ -17,6 +17,11 @@ export function Rodape({ className }: { className?: string }) {
         </a>
       </p>
       <p className="mt-1 opacity-80">Consultoria: {SITE.consultoria}</p>
+      <p className="mt-2">
+        <a href="/privacidade" className="underline-offset-4 transition hover:text-chem-primary hover:underline">
+          Privacidade e dados
+        </a>
+      </p>
     </footer>
   );
 }

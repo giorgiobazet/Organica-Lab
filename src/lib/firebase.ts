@@ -15,12 +15,17 @@ import {
   signInWithEmailAndPassword,
   signOut as fbSignOut,
   sendEmailVerification,
+  sendPasswordResetEmail,
   updateProfile as fbUpdateProfile,
   reload,
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  connectAuthEmulator,
   type Auth,
   type User,
 } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, type Firestore } from "firebase/firestore/lite";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, connectFirestoreEmulator, type Firestore } from "firebase/firestore/lite";
 import { perfilDaMatricula, type CadastroInput, type Perfil } from "./validation";
 
 // ---------------------------------------------------------------------------
@@ -58,6 +63,8 @@ export interface UserProfile {
   perfil?: Perfil;
   xp: number;
   progresso: Progresso;
+  /** Códigos das turmas em que o aluno entrou. */
+  turmas?: string[];
 }
 
 export type AuthMode = "firebase" | "dev";
@@ -72,6 +79,13 @@ export interface AuthBackend {
   /** Recarrega o usuário atual do provedor (atualiza emailVerified). */
   reloadUser(): Promise<AppUser | null>;
   getProfile(uid: string): Promise<UserProfile | null>;
+  /** Envia o e-mail de redefinição de senha (sem revelar se a conta existe). */
+  resetPassword(email: string): Promise<void>;
+  /**
+   * Exclui a conta (LGPD). Pede a senha de novo; `limpar` apaga antes os dados ligados à conta
+   * (turmas, matrículas em turmas, pedido de validação).
+   */
+  deleteAccount(senha: string, limpar?: (uid: string) => Promise<void>): Promise<void>;
   updateProfile(uid: string, patch: Partial<UserProfile>): Promise<void>;
   /** Só no Modo Dev: simula o clique no link enviado por e-mail. */
   devVerifyEmail?(): Promise<void>;
@@ -129,6 +143,8 @@ const FIREBASE_ERROS: Record<string, string> = {
   "auth/wrong-password": "E-mail ou senha incorretos.",
   "auth/too-many-requests": "Muitas tentativas. Aguarde alguns minutos.",
   "auth/network-request-failed": "Falha de rede. Verifique sua conexão.",
+  "auth/requires-recent-login": "Por segurança, entre de novo e repita a operação.",
+  "auth/missing-password": "Informe a senha.",
 };
 
 function traduzErroFirebase(err: unknown): AuthError {
@@ -157,6 +173,45 @@ class FirebaseBackend implements AuthBackend {
     // E-mails de verificação e redefinição em português.
     this.auth.languageCode = "pt-BR";
     this.db = getFirestore(this.app);
+    // Só nos testes locais (emuladores do Firebase); nunca definido no build publicado.
+    if (process.env.NEXT_PUBLIC_FIREBASE_EMULADOR === "1") {
+      connectAuthEmulator(this.auth, "http://127.0.0.1:9099", { disableWarnings: true });
+      connectFirestoreEmulator(this.db, "127.0.0.1", 8080);
+    }
+    // App Check (reCAPTCHA Enterprise): liga quando a chave do site for configurada no .env.
+    const chaveRecaptcha = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (chaveRecaptcha) {
+      void import("firebase/app-check").then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) =>
+        initializeAppCheck(this.app, { provider: new ReCaptchaEnterpriseProvider(chaveRecaptcha), isTokenAutoRefreshEnabled: true }),
+      );
+    }
+  }
+
+  get firestore() {
+    return this.db;
+  }
+
+  async resetPassword(email: string) {
+    try {
+      await sendPasswordResetEmail(this.auth, email.trim());
+    } catch (err) {
+      const e = traduzErroFirebase(err);
+      // Conta inexistente não é revelada (proteção contra enumeração de e-mails).
+      if (e.code !== "auth/user-not-found" && e.code !== "auth/invalid-credential") throw e;
+    }
+  }
+
+  async deleteAccount(senha: string, limpar?: (uid: string) => Promise<void>) {
+    const u = this.auth.currentUser;
+    if (!u?.email) throw new AuthError("auth/no-user", "Nenhum usuário conectado.");
+    try {
+      await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, senha));
+      await limpar?.(u.uid);
+      await deleteDoc(doc(this.db, "users", u.uid));
+      await deleteUser(u);
+    } catch (err) {
+      throw err instanceof AuthError ? err : traduzErroFirebase(err);
+    }
   }
 
   onAuthChange(cb: (user: AppUser | null) => void) {
@@ -364,6 +419,25 @@ class DevBackend implements AuthBackend {
     lsWrite(LS_PROFILES, profiles);
   }
 
+  async resetPassword(email: string) {
+    console.info(`[OrgânicaLab Modo Dev] E-mail de redefinição de senha simulado para ${email.trim()}.`);
+  }
+
+  async deleteAccount(senha: string, limpar?: (uid: string) => Promise<void>) {
+    const rec = this.current();
+    if (!rec) throw new AuthError("auth/no-user", "Nenhum usuário conectado.");
+    if (rec.senhaHash !== (await hashSenha(senha, rec.uid))) throw new AuthError("auth/wrong-password", "Senha incorreta.");
+    await limpar?.(rec.uid);
+    const users = this.users();
+    delete users[rec.email];
+    lsWrite(LS_USERS, users);
+    const profiles = lsRead<Record<string, UserProfile>>(LS_PROFILES, {});
+    delete profiles[rec.uid];
+    lsWrite(LS_PROFILES, profiles);
+    lsWrite(LS_SESSION, null);
+    this.emit();
+  }
+
   async devVerifyEmail() {
     const rec = this.current();
     if (!rec) throw new AuthError("auth/no-user", "Nenhum usuário conectado.");
@@ -379,6 +453,12 @@ class DevBackend implements AuthBackend {
 // ---------------------------------------------------------------------------
 
 let backend: AuthBackend | null = null;
+
+/** Firestore do projeto (null no Modo Dev, em que turmas e validação de professores não existem). */
+export function getFirestoreDb(): Firestore | null {
+  const b = getAuthBackend();
+  return b instanceof FirebaseBackend ? b.firestore : null;
+}
 
 export function getAuthBackend(): AuthBackend {
   if (typeof window === "undefined") {

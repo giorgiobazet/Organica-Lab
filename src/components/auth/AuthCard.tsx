@@ -178,11 +178,33 @@ function LoginForm({
   onCriar: () => void;
   onPerfilDiferente: (correto: Perfil, mensagem: string) => void;
 }) {
-  const { signIn } = useAuth();
+  const { signIn, resetPassword, mode } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [infoSenha, setInfoSenha] = useState<string | null>(null);
+
+  const esqueciSenha = async () => {
+    setInfoSenha(null);
+    const emailErr = validarEmail(email);
+    if (emailErr) return setErro(email ? emailErr : "Digite o seu e-mail acima e toque de novo em “Esqueci minha senha”.");
+    setErro(null);
+    setEnviando(true);
+    try {
+      await resetPassword(email);
+      // Mensagem neutra: não revela se existe conta com este e-mail.
+      setInfoSenha(
+        mode === "dev"
+          ? "Modo Dev: o e-mail de redefinição foi apenas simulado (veja o console)."
+          : `Se houver uma conta com ${email.trim()}, enviamos um link para criar uma nova senha. Veja também o spam.`,
+      );
+    } catch (err) {
+      setErro(err instanceof AuthError ? err.message : "Não foi possível enviar o e-mail agora.");
+    } finally {
+      setEnviando(false);
+    }
+  };
   const s = SESSAO[perfil];
 
   useEffect(() => setErro(null), [perfil]);
@@ -217,6 +239,12 @@ function LoginForm({
       <Field icon={<KeyRound className="h-4 w-4" />} label="Senha">
         <CampoSenha value={senha} onChange={setSenha} autoComplete="current-password" />
       </Field>
+      <div className="-mt-2 text-right">
+        <button type="button" onClick={esqueciSenha} disabled={enviando} className="text-xs font-medium text-muted hover:text-chem-primary hover:underline">
+          Esqueci minha senha
+        </button>
+      </div>
+      {infoSenha && <p className="rounded-lg bg-chem-success/10 px-3 py-2 text-sm text-chem-success" role="status">{infoSenha}</p>}
       {erro && <p className="rounded-lg bg-chem-danger/10 px-3 py-2 text-sm text-chem-danger" role="alert">{erro}</p>}
       <button type="submit" className={cn("btn-primary w-full", perfil === "servidor" && "btn-servidor")} disabled={enviando}>
         {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
@@ -297,6 +325,13 @@ function CadastroForm({ perfil, onEntrar }: { perfil: Perfil; onEntrar: () => vo
         })}
       </ul>
       {erroGeral && <p className="rounded-lg bg-chem-danger/10 px-3 py-2 text-sm text-chem-danger" role="alert">{erroGeral}</p>}
+      <p className="text-xs text-muted">
+        Ao criar a conta, você concorda com o uso dos seus dados descrito na{" "}
+        <a href="/privacidade" target="_blank" className="font-semibold underline-offset-2 hover:text-chem-primary hover:underline">
+          Política de Privacidade
+        </a>
+        .
+      </p>
       <button type="submit" className={cn("btn-primary w-full", perfil === "servidor" && "btn-servidor")} disabled={enviando}>
         {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
         {s.criar}

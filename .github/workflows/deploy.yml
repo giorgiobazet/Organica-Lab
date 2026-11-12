@@ -1,0 +1,47 @@
+# Publica o site no Firebase Hosting a cada push na main.
+# Requer o segredo FIREBASE_SERVICE_ACCOUNT_CHEMPHARM_HUB (chave JSON de uma conta de serviço
+# com o papel "Administrador do Firebase Hosting"). Sem o segredo, o build roda e a publicação é pulada.
+name: Publicar site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hosting
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: node scripts/checar-build.mjs
+
+      - name: Verificar segredo
+        id: segredo
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHEMPHARM_HUB }}
+        run: |
+          if [ -n "$SA" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "::warning::Segredo FIREBASE_SERVICE_ACCOUNT_CHEMPHARM_HUB ausente: publicação pulada."; fi
+
+      - name: Publicar no Firebase Hosting
+        if: steps.segredo.outputs.ok == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHEMPHARM_HUB }}
+          channelId: live
+          projectId: chempharm-hub

@@ -1,30 +1,159 @@
 rules_version = '2';
 
 // Cada usuário (aluno ou servidor) lê e escreve apenas o próprio perfil.
+// Professores só ganham acesso a turmas depois de aprovados pelo administrador
+// (coleção `professores`, que só o administrador escreve). Administradores são
+// cadastrados à mão no console, na coleção `admins`.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function logado() {
+      return request.auth != null;
+    }
+    function verificado() {
+      return logado() && request.auth.token.email_verified == true;
+    }
+    function eu(uid) {
+      return logado() && request.auth.uid == uid;
+    }
+    function admin() {
+      return verificado() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function professorAprovado() {
+      return verificado() && exists(/databases/$(database)/documents/professores/$(request.auth.uid));
+    }
+    function meuPerfil() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function textoAte(v, n) {
+      return v is string && v.size() > 0 && v.size() <= n;
+    }
+
     match /users/{uid} {
-      allow create: if request.auth != null
-        && request.auth.uid == uid
+      allow create: if eu(uid)
         && request.resource.data.keys().hasOnly(['nome', 'email', 'matricula', 'perfil', 'xp', 'progresso'])
         && request.resource.data.matricula is string
         // Perfil coerente com o formato: aluno = 12 dígitos; servidor (professor/técnico) = 00000-0.
-        // O perfil só identifica o usuário: nenhuma regra concede acesso extra a servidores.
+        // O perfil só identifica o usuário: o acesso de professor depende da aprovação (coleção professores).
         && ((request.resource.data.matricula.matches('^[0-9]{12}$') && request.resource.data.perfil == 'aluno')
           || (request.resource.data.matricula.matches('^[0-9]{5}-[0-9]$') && request.resource.data.perfil == 'servidor'))
         && request.resource.data.xp == 0;
 
-      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read: if eu(uid);
 
-      // Progresso e XP só depois do e-mail verificado; nome, e-mail e matrícula ficam imutáveis.
-      allow update: if request.auth != null
-        && request.auth.uid == uid
-        && request.auth.token.email_verified == true
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['xp', 'progresso'])
+      // Progresso, XP e turmas só depois do e-mail verificado; nome, e-mail e matrícula ficam imutáveis.
+      allow update: if eu(uid) && verificado()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['xp', 'progresso', 'turmas'])
         && request.resource.data.xp is int
-        && request.resource.data.xp >= 0;
+        && request.resource.data.xp >= 0
+        && (!('turmas' in request.resource.data)
+          || (request.resource.data.turmas is list && request.resource.data.turmas.size() <= 20));
 
-      allow delete: if false;
+      // Exclusão da conta pelo próprio usuário (LGPD).
+      allow delete: if eu(uid);
+    }
+
+    // Administradores: criados só pelo console. Cada um lê apenas o próprio documento.
+    match /admins/{uid} {
+      allow get: if eu(uid);
+      allow list, write: if false;
+    }
+
+    // Pedido de validação de professor: o servidor pede; o administrador decide.
+    match /verificacoes/{uid} {
+      allow get: if eu(uid) || admin();
+      allow list: if admin();
+
+      allow create: if eu(uid) && verificado()
+        && meuPerfil().perfil == 'servidor'
+        && request.resource.data.keys().hasOnly(['nome', 'email', 'matricula', 'status', 'criadoEm'])
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.nome == meuPerfil().nome
+        && request.resource.data.email == meuPerfil().email
+        && request.resource.data.matricula == meuPerfil().matricula
+        && request.resource.data.criadoEm == request.time;
+
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'motivo', 'decididoEm'])
+        && request.resource.data.status in ['aprovado', 'recusado', 'revogado']
+        && request.resource.data.motivo is string
+        && request.resource.data.motivo.size() <= 300
+        && request.resource.data.decididoEm == request.time;
+
+      // O próprio servidor cancela ou refaz o pedido; também ao excluir a conta.
+      allow delete: if eu(uid);
+    }
+
+    // Professores aprovados: só o administrador cria ou revoga.
+    match /professores/{uid} {
+      allow get: if eu(uid) || admin();
+      allow list: if admin();
+      allow create: if admin()
+        && request.resource.data.keys().hasOnly(['nome', 'email', 'matricula', 'aprovadoEm'])
+        && request.resource.data.aprovadoEm == request.time;
+      allow update: if false;
+      // O administrador revoga; o próprio professor sai ao excluir a conta.
+      allow delete: if admin() || eu(uid);
+    }
+
+    match /turmas/{codigo} {
+      function dadosTurmaValidos(d) {
+        return textoAte(d.nome, 80)
+          && d.tarefas is list && d.tarefas.size() <= 60
+          && d.listas is list && d.listas.size() <= 30;
+      }
+      function donoDaTurma() {
+        return logado() && resource.data.professorUid == request.auth.uid;
+      }
+
+      // Qualquer usuário verificado abre uma turma pelo código (6 caracteres aleatórios).
+      allow get: if verificado();
+      // Listar: só as próprias turmas (a consulta precisa filtrar por professorUid).
+      allow list: if donoDaTurma() || admin();
+
+      allow create: if professorAprovado()
+        && codigo.matches('^[A-HJKMNP-Z2-9]{6}$')
+        && request.resource.data.keys().hasOnly(['nome', 'professorUid', 'professorNome', 'tarefas', 'listas', 'criadoEm'])
+        && request.resource.data.professorUid == request.auth.uid
+        && request.resource.data.professorNome == meuPerfil().nome
+        && request.resource.data.criadoEm == request.time
+        && dadosTurmaValidos(request.resource.data);
+
+      allow update: if professorAprovado() && donoDaTurma()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'tarefas', 'listas'])
+        && dadosTurmaValidos(request.resource.data);
+
+      // O dono exclui mesmo se a validação for revogada (e ao excluir a conta).
+      allow delete: if donoDaTurma();
+
+      // Participação do aluno: nome e matrícula copiados do perfil; XP igual ao do perfil.
+      match /membros/{uid} {
+        function professorDaTurma() {
+          return logado() && get(/databases/$(database)/documents/turmas/$(codigo)).data.professorUid == request.auth.uid;
+        }
+        function progressoValido(d) {
+          return d.xp == meuPerfil().xp
+            && d.concluidos is list && d.concluidos.size() <= 300
+            && d.atualizadoEm == request.time;
+        }
+
+        allow get: if eu(uid) || professorDaTurma();
+        allow list: if professorDaTurma();
+
+        allow create: if eu(uid) && verificado()
+          && exists(/databases/$(database)/documents/turmas/$(codigo))
+          && request.resource.data.keys().hasOnly(['nome', 'matricula', 'xp', 'concluidos', 'entrouEm', 'atualizadoEm'])
+          && request.resource.data.nome == meuPerfil().nome
+          && request.resource.data.matricula == meuPerfil().matricula
+          && request.resource.data.entrouEm == request.time
+          && progressoValido(request.resource.data);
+
+        allow update: if eu(uid) && verificado()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['xp', 'concluidos', 'atualizadoEm'])
+          && progressoValido(request.resource.data);
+
+        // O aluno sai da turma; o professor remove alunos.
+        allow delete: if eu(uid) || professorDaTurma();
+      }
     }
 
     match /{document=**} {

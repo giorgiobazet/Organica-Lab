@@ -3,14 +3,14 @@
 import { SITE } from "@/config/site";
 import Link from "next/link";
 import { m } from "framer-motion";
-import { FlaskConical, LogOut, Moon, Sun } from "lucide-react";
+import { BadgeCheck, FlaskConical, LogOut, Moon, Sun, UserRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { BotaoModoLeve } from "@/components/BotaoModoLeve";
 import { nivelDoXp } from "@/lib/validation";
 
 export function LabHeader() {
-  const { profile, user, mode, signOut } = useAuth();
+  const { profile, user, mode, signOut, papel } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const xp = profile?.xp ?? 0;
   const { nivel, xpNoNivel, xpParaProximo, progresso } = nivelDoXp(xp);
@@ -54,10 +54,20 @@ export function LabHeader() {
           <div className="text-right leading-tight">
             <p className="max-w-[180px] truncate text-sm font-semibold">{nome}</p>
             <p className="font-mono text-xs text-muted">
-              {profile?.perfil === "servidor" && <span className="chip mr-1.5 bg-chem-orbital/15 font-sans text-chem-orbital">Professor(a) / Técnico(a)</span>}
+              {profile?.perfil === "servidor" &&
+                (papel.professor === "aprovado" ? (
+                  <span className="chip mr-1.5 bg-chem-success/15 font-sans text-chem-success" title="Validado pelo administrador">
+                    <BadgeCheck className="h-3 w-3" /> Professor(a) verificado(a)
+                  </span>
+                ) : (
+                  <span className="chip mr-1.5 bg-chem-orbital/15 font-sans text-chem-orbital">Professor(a) / Técnico(a)</span>
+                ))}
               Matrícula {profile?.matricula ?? "—"}
             </p>
           </div>
+          <Link href="/conta" className="btn-ghost !p-2 text-muted" aria-label="Minha conta" title="Minha conta e privacidade">
+            <UserRound className="h-4 w-4" />
+          </Link>
           <BotaoModoLeve />
           <button
             onClick={toggleTheme}

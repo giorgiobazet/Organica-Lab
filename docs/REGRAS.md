@@ -80,6 +80,26 @@ Tipografia: **Inter** na interface e **JetBrains Mono** em fórmulas, nomes IUPA
 - A mesma política de senha é exigida no servidor (Authentication → Configurações → Política de senha: "Exigir aplicação").
 - Site publicado em https://organicalab.web.app (Hosting do projeto `chempharm-hub`, site `organicalab`); `npm run deploy` publica (antes, `scripts/checar-build.mjs` barra builds sem a configuração do Firebase), e o domínio está em "Domínios autorizados".
 - Cabeçalhos de segurança (CSP, X-Frame-Options, HSTS etc.) em `firebase.json`; um domínio externo novo precisa entrar no `connect-src` da CSP.
-- Cadastro: nome completo, e-mail, matrícula (aluno: 12 dígitos, ex.: 202012345678; professor/técnico: `00000-0`, ex.: 12345-6 → `perfil: "servidor"`, derivado do formato e conferido em `firestore.rules`; o perfil só identifica, não dá acesso extra), senha com 8+ caracteres, maiúscula, minúscula, número e símbolo (`REQUISITOS_SENHA` em `src/lib/validation.ts`).
-- Rotas `/hub`, `/organica-1`, `/organica-2`, `/organica-3`, `/analise-organica` e `/laboratorio` exigem login com `emailVerified === true` (`<RequireVerified/>`).
+- Cadastro: nome completo, e-mail, matrícula (aluno: 12 dígitos, ex.: 202012345678; professor/técnico: `00000-0`, ex.: 12345-6 → `perfil: "servidor"`, derivado do formato e conferido em `firestore.rules`; o perfil só identifica, e criar turmas exige aprovação do administrador), senha com 8+ caracteres, maiúscula, minúscula, número e símbolo (`REQUISITOS_SENHA` em `src/lib/validation.ts`).
+- Rotas `/hub`, `/organica-1`, `/organica-2`, `/organica-3`, `/analise-organica`, `/laboratorio`, `/conta`, `/professor` e `/admin` exigem login com `emailVerified === true` (`<RequireVerified/>`).
 - Perfil no Firestore: `users/{uid}` = `{ nome, email, matricula, perfil, xp, progresso }` (perfis antigos sem `perfil` são de alunos).
+- Recuperar senha: "Esqueci minha senha" no login (`sendPasswordResetEmail`), com mensagem neutra que não revela se a conta existe.
+
+## Professores, turmas e administração
+
+- Matrícula de servidor só identifica o perfil. Para criar turmas, o professor pede validação em `/professor` (`verificacoes/{uid}`, com nome, e-mail e matrícula iguais aos do perfil) e o administrador aprova ou recusa em `/admin` (cria `professores/{uid}`; pode revogar com motivo).
+- Administradores: documento `admins/{uid}` criado só pelo console do Firestore (nenhuma regra permite escrevê-lo pelo site).
+- Turmas: `turmas/{codigo}` (código de 6 caracteres sem 0/O/1/I/L), com `tarefas` ("disciplina/jogo") e `listas` (links internos `/laboratorio?…`). O aluno entra pelo Hub ou pelo convite `/hub?turma=CÓDIGO` e grava `turmas/{codigo}/membros/{uid}` (nome e matrícula copiados do perfil, XP igual ao do perfil); o `AuthContext` sincroniza XP e jogos concluídos 1,5 s depois de cada atualização. O professor vê a tabela de progresso e baixa CSV.
+- Toda a lógica fica em `src/lib/turmas.ts`; telas em `src/components/turmas/`. Não existe no Modo Dev.
+- Testes das regras: emuladores do Firebase (`NEXT_PUBLIC_FIREBASE_EMULADOR=1` liga o app aos emuladores locais de Auth e Firestore; nunca no build publicado).
+
+## Privacidade (LGPD)
+
+- `/privacidade` (pública, linkada no rodapé e no cadastro) e `/conta`: mostra os dados, baixa um JSON e exclui a conta (pede a senha; apaga participações, turmas próprias, pedido de validação, perfil e login).
+- Contato público em `SITE.contato` (`src/config/site.ts`).
+
+## Publicação automática
+
+- `.github/workflows/deploy.yml`: a cada push na `main`, roda typecheck, build e `checar-build.mjs` e publica no Hosting. Precisa do segredo `FIREBASE_SERVICE_ACCOUNT_CHEMPHARM_HUB` no GitHub; sem ele, só valida o build.
+- Regras do Firestore são publicadas à mão: `npx firebase-tools deploy --only firestore:rules --project chempharm-hub`.
+- App Check (opcional): definir `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` liga o reCAPTCHA Enterprise; antes, incluir os domínios do reCAPTCHA na CSP do `firebase.json`.

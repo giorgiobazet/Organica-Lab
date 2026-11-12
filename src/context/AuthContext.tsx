@@ -11,6 +11,16 @@ import {
   type UserProfile,
 } from "@/lib/firebase";
 import { ROTULO_PERFIL, type CadastroInput, type Perfil } from "@/lib/validation";
+import { apagarDadosVinculados, sincronizarProgresso, souAdmin, statusProfessor, turmasDisponiveis, type StatusProfessor } from "@/lib/turmas";
+
+/** Papéis que dependem de aprovação (só existem com o Firebase configurado). */
+export interface Papel {
+  carregado: boolean;
+  admin: boolean;
+  professor: StatusProfessor;
+}
+
+const PAPEL_VAZIO: Papel = { carregado: false, admin: false, professor: "nenhum" };
 
 export type AuthStatus = "loading" | "signedOut" | "unverified" | "verified";
 
@@ -39,6 +49,14 @@ interface AuthContextValue {
    * Devolve true se foi a primeira conclusão.
    */
   concluirJogo(disciplinaId: string, jogoId: string, xpBonus: number): Promise<boolean>;
+  /** Envia o e-mail de redefinição de senha (resposta neutra: não revela se a conta existe). */
+  resetPassword(email: string): Promise<void>;
+  /** Exclui a conta e os dados ligados a ela (pede a senha de novo). */
+  deleteAccount(senha: string): Promise<void>;
+  papel: Papel;
+  recarregarPapel(): Promise<void>;
+  /** Relê o perfil do banco (ex.: depois de entrar numa turma). */
+  recarregarPerfil(): Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -56,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Enquanto o login confere o perfil, o ouvinte do provedor não publica o usuário (evita
   // redirecionar para o Hub uma conta que ainda pode ser desconectada).
   const conferindoPerfil = useRef(false);
+  const [papel, setPapel] = useState<Papel>(PAPEL_VAZIO);
 
   useEffect(() => {
     const b = getAuthBackend();
@@ -69,6 +88,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setStatus(statusOf(u));
     });
   }, []);
+
+  const carregarPapel = useCallback(async (u: AppUser | null, p: UserProfile | null) => {
+    if (!u?.emailVerified || !turmasDisponiveis()) {
+      setPapel({ ...PAPEL_VAZIO, carregado: true });
+      return;
+    }
+    const [admin, prof] = await Promise.all([
+      souAdmin(u.uid),
+      p?.perfil === "servidor" ? statusProfessor(u.uid).then((r) => r.status).catch(() => "nenhum" as const) : ("nenhum" as const),
+    ]);
+    setPapel({ carregado: true, admin, professor: prof });
+  }, []);
+
+  useEffect(() => {
+    if (status === "verified") void carregarPapel(user, profile);
+    else setPapel(PAPEL_VAZIO);
+    // Recarrega só quando muda a conta ou o status de verificação.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, user?.uid, carregarPapel]);
 
   const requireBackend = useCallback(() => {
     if (!backend) throw new Error("Autenticação ainda carregando.");
@@ -143,6 +181,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Ref com o perfil mais recente: várias atualizações seguidas não se sobrescrevem.
   const profileRef = useRef<UserProfile | null>(profile);
   profileRef.current = profile;
+  const ultimaEscrita = useRef<Promise<unknown>>(Promise.resolve());
+  const timerSync = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const persist = useCallback(
     async (patchFn: (p: UserProfile) => Partial<UserProfile>) => {
@@ -152,7 +192,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const next = { ...atual, ...patch };
       profileRef.current = next;
       setProfile(next);
-      await backend.updateProfile(user.uid, patch);
+      const escrita = backend.updateProfile(user.uid, patch);
+      ultimaEscrita.current = escrita.catch(() => undefined);
+      await escrita;
+      // Espelha XP e jogos concluídos nas turmas do aluno, agrupando atualizações seguidas.
+      if (next.turmas?.length) {
+        if (timerSync.current) clearTimeout(timerSync.current);
+        const uid = user.uid;
+        timerSync.current = setTimeout(async () => {
+          await ultimaEscrita.current;
+          if (profileRef.current) void sincronizarProgresso(uid, profileRef.current);
+        }, 1500);
+      }
     },
     [backend, user],
   );
@@ -199,6 +250,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [persist],
   );
 
+  const resetPassword = useCallback((email: string) => requireBackend().resetPassword(email), [requireBackend]);
+
+  const deleteAccount = useCallback(
+    async (senha: string) => {
+      const b = requireBackend();
+      const p = profileRef.current;
+      await b.deleteAccount(senha, (uid) => apagarDadosVinculados(uid, p));
+      setUser(null);
+      setProfile(null);
+      setStatus("signedOut");
+    },
+    [requireBackend],
+  );
+
+  const recarregarPapel = useCallback(() => carregarPapel(user, profileRef.current), [carregarPapel, user]);
+
+  const recarregarPerfil = useCallback(async () => {
+    if (!backend || !user) return;
+    const p = await backend.getProfile(user.uid);
+    profileRef.current = p;
+    setProfile(p);
+  }, [backend, user]);
+
   const value: AuthContextValue = {
     status,
     mode: backend?.mode ?? null,
@@ -213,6 +287,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     addXp,
     registrarExperimento,
     concluirJogo,
+    resetPassword,
+    deleteAccount,
+    papel,
+    recarregarPapel,
+    recarregarPerfil,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
