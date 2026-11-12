@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { AtomSpec, GLViewer } from "3dmol";
-import { ArrowLeft, ChevronLeft, ChevronRight, Download, FlaskRound, Link2, Maximize2, Minimize2, PenLine, Ruler, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeft, Atom, ChevronLeft, ChevronRight, Dna, Download, FlaskRound, Link2, Maximize2, Minimize2, PenLine, Ruler, Sparkles, Trash2, X } from "lucide-react";
 import { Molecule3DViewer } from "@/components/Molecule3DViewer";
+import { COMPLEXOS } from "@/data/complexos";
 import { GALERIA, TEMAS_GALERIA, type TemaGaleria } from "@/data/galeria";
 import { getCachedByCid } from "@/data/molecules3d";
 import { normalizarNome, traduzirNome } from "@/data/nomesQuimicos";
@@ -13,6 +14,9 @@ import { cn } from "@/lib/utils";
 import { BuscaMolecula, type EscolhaBusca } from "./BuscaMolecula";
 import { EditorMolecula } from "./EditorMolecula";
 import { gerarMolecula, type MoleculaGerada } from "./ocl";
+import { PainelComplexo } from "./PainelComplexo";
+import { cargasGasteiger } from "./cargas";
+import { VisualizadorComplexo } from "./VisualizadorComplexo";
 import { FichaMolecula, PainelLipinski, SeloFonte, dadosDaMolecula } from "./FichaMolecula";
 import { PainelLista, listaDaUrl, useListaAula } from "./ListaDaAula";
 import {
@@ -47,6 +51,7 @@ export function LaboratorioMolecular() {
   const [selecionados, setSelecionados] = useState<AtomoMedido[]>([]);
   const [medidas, setMedidas] = useState<Medida[]>([]);
   const { lista, setLista, editar } = useListaAula();
+  const [cargas, setCargas] = useState(false);
   /** undefined: editor fechado; "": desenho novo; SMILES: editar a molécula atual. */
   const [editor, setEditor] = useState<string | undefined>(undefined);
   const listaPorLink = useRef(false);
@@ -94,6 +99,13 @@ export function LaboratorioMolecular() {
       const id = ++pedido.current;
       setMedidas([]);
       setSelecionados([]);
+      if (ref.tipo === "pdb") {
+        const c = COMPLEXOS.find((x) => x.id === ref.id);
+        if (!c) return avisar("Complexo não encontrado.");
+        setModo(null);
+        setMol({ ref, nome: `${c.farmaco} · ${c.alvo}`, consultando: false });
+        return;
+      }
       if (ref.tipo === "galeria") {
         const g = GALERIA.find((x) => x.chave === ref.chave);
         if (!g) return avisar("Molécula não encontrada na galeria.");
@@ -221,7 +233,8 @@ export function LaboratorioMolecular() {
       void carregar(recebida.itens[0].ref);
       return;
     }
-    const m = p.get("m");
+    const pdb = p.get("pdb");
+    const m = pdb ? `p:${pdb}` : p.get("m");
     const ref: RefMolecula | null = m
       ? textoParaRef(m)
       : p.get("cid") && /^\d+$/.test(p.get("cid")!)
@@ -271,9 +284,46 @@ export function LaboratorioMolecular() {
     }
   }, []);
 
+  // Mapa de cargas: Gasteiger calculado da estrutura exibida, projetado na superfície de van der Waals.
+  const cargasRef = useRef(false);
+  cargasRef.current = cargas;
+  const desenharCargas = useCallback((v: GLViewer) => {
+    const atomos = v.selectedAtoms({});
+    const pos = new Map(atomos.map((a, i) => [a.index, i]));
+    const q = cargasGasteiger(
+      atomos.map((a) => ({
+        elem: a.elem ?? "C",
+        ligacoes: (a.bonds ?? []).map((b) => pos.get(b) ?? -1).filter((b) => b >= 0),
+        ordens: a.bondOrder ?? [],
+        cargaFormal: (a as { formalCharge?: number }).formalCharge ?? 0,
+      })),
+    );
+    atomos.forEach((a, i) => {
+      a.properties = { ...(a.properties ?? {}), partialCharge: q[i] };
+    });
+    v.addSurface(1, { opacity: 0.9, colorscheme: { prop: "partialCharge", gradient: "rwb", min: -0.4, max: 0.4 } as never });
+  }, []);
+  const extras = useCallback(
+    (v: GLViewer) => {
+      desenharMedidas(v);
+      if (cargasRef.current) desenharCargas(v);
+    },
+    [desenharMedidas, desenharCargas],
+  );
+  useEffect(() => {
+    const v = viewerRef.current;
+    if (!v || emComplexo.current) return;
+    v.removeAllSurfaces();
+    if (cargas) desenharCargas(v);
+    v.render();
+  }, [cargas, desenharCargas]);
+
+  const emComplexo = useRef(false);
+  emComplexo.current = mol?.ref.tipo === "pdb";
   const redesenhar = useCallback(() => {
     const v = viewerRef.current;
-    if (!v) return;
+    // No complexo, as formas e rótulos (ligações de H) são do VisualizadorComplexo.
+    if (!v || emComplexo.current) return;
     v.removeAllShapes();
     v.removeAllLabels();
     desenharMedidas(v);
@@ -382,10 +432,19 @@ export function LaboratorioMolecular() {
 
   // ---------------------------------------------------------------- interface
   const d = mol ? dadosDaMolecula(mol) : null;
-  const smilesAtual = mol ? (mol.ref.tipo === "smiles" ? mol.ref.smiles : (mol.local?.smilesIsomerico ?? d?.smiles)) : undefined;
+  const complexo = mol?.ref.tipo === "pdb" ? (COMPLEXOS.find((c) => mol.ref.tipo === "pdb" && c.id === mol.ref.id) ?? null) : null;
+  const smilesAtual = mol && !complexo ? (mol.ref.tipo === "smiles" ? mol.ref.smiles : (mol.local?.smilesIsomerico ?? d?.smiles)) : undefined;
+  // Complexo do PDB com o fármaco aberto (pela galeria ou pelo nome).
+  const noAlvo = mol && !complexo
+    ? COMPLEXOS.find((c) => (mol.ref.tipo === "galeria" && c.galeria === mol.ref.chave) || normalizarNome(c.farmaco) === normalizarNome(mol.nome))
+    : undefined;
+  const abrirFarmacoDoComplexo = (c: (typeof COMPLEXOS)[number]) => {
+    if (c.galeria) void carregar({ tipo: "galeria", chave: c.galeria });
+    else void resolverNome(c.farmaco);
+  };
   const ferramentas = (
     <div className="flex flex-wrap items-center gap-1.5">
-      {(["distancia", "angulo", "torcao"] as TipoMedida[]).map((t) => (
+      {!complexo && (["distancia", "angulo", "torcao"] as TipoMedida[]).map((t) => (
         <button
           key={t}
           type="button"
@@ -396,7 +455,18 @@ export function LaboratorioMolecular() {
           <Ruler className="h-3.5 w-3.5" /> {t === "distancia" ? "Distância" : t === "angulo" ? "Ângulo" : "Torção"}
         </button>
       ))}
-      <span className="mx-1 hidden h-5 w-px bg-ui-border/30 sm:block" />
+      {!complexo && (
+        <button
+          type="button"
+          onClick={() => setCargas((c) => !c)}
+          aria-pressed={cargas}
+          className={cn("btn-ghost !px-2.5 !py-1.5 text-xs", cargas && "!border-chem-orbital bg-chem-orbital/15 text-chem-orbital")}
+          title="Superfície colorida pelas cargas parciais (Gasteiger)"
+        >
+          <Atom className="h-3.5 w-3.5" /> Cargas
+        </button>
+      )}
+      {!complexo && <span className="mx-1 hidden h-5 w-px bg-ui-border/30 sm:block" />}
       <button type="button" onClick={alternarProjetor} className="btn-ghost !px-2.5 !py-1.5 text-xs">
         {projetor ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />} {projetor ? "Sair" : "Projetor"}
       </button>
@@ -419,7 +489,9 @@ export function LaboratorioMolecular() {
 
   const visualizador = (
     <div className={cn("relative overflow-hidden rounded-2xl", projetor ? "h-full" : "h-[52vh] min-h-[340px] lg:h-[calc(100vh-13rem)] lg:min-h-[520px]")}>
-      {mol?.sdf ? (
+      {complexo ? (
+        <VisualizadorComplexo c={complexo} className="absolute inset-0" onViewerReady={(v) => (viewerRef.current = v)} />
+      ) : mol?.sdf ? (
         <Molecule3DViewer
           sdf={mol.sdf}
           origemSdf={mol.origemSdf}
@@ -432,11 +504,23 @@ export function LaboratorioMolecular() {
             tornarClicavel(v);
           }}
           onCarregado={() => viewerRef.current && tornarClicavel(viewerRef.current)}
-          desenharExtras={desenharMedidas}
+          desenharExtras={extras}
         />
       ) : (
         <div className="flex h-full items-center justify-center bg-[var(--viewer)] p-6 text-center text-sm text-muted">
           {mol?.consultando ? "Buscando o modelo 3D no PubChem…" : (mol?.aviso ?? "Escolha uma molécula na busca ou na galeria.")}
+        </div>
+      )}
+      {cargas && !complexo && mol?.sdf && (
+        <div className="pointer-events-none absolute right-3 top-12 w-48 rounded-lg bg-ui-surface/85 p-2 text-[11px]">
+          <p className="mb-1 font-semibold">Cargas parciais (Gasteiger)</p>
+          <div className="h-2.5 rounded-full" style={{ background: "linear-gradient(90deg, #ff0000, #ffffff, #0000ff)" }} />
+          <div className="mt-0.5 flex justify-between font-mono text-muted">
+            <span>δ− −0,4</span>
+            <span>0</span>
+            <span>+0,4 δ+</span>
+          </div>
+          <p className="mt-1 leading-snug text-muted">Vermelho: rico em elétrons. Azul: pobre em elétrons. Aproximação qualitativa do potencial eletrostático.</p>
         </div>
       )}
       {modo && (
@@ -461,6 +545,7 @@ export function LaboratorioMolecular() {
             {lista.titulo && <p className="text-sm font-semibold uppercase tracking-widest text-chem-primary">{lista.titulo}</p>}
             <h2 className="text-3xl font-extrabold sm:text-5xl">{mol?.nome}</h2>
             {d && <p className="mt-1 font-mono text-xl text-muted sm:text-2xl">{formulaSubscrita(d.formula)}</p>}
+            {complexo && <p className="mt-1 font-mono text-lg text-muted">PDB {complexo.id}</p>}
           </div>
           <div className="absolute bottom-4 left-4 max-w-[40%]">{ferramentas}</div>
           {lista.itens.length > 0 && (
@@ -517,7 +602,7 @@ export function LaboratorioMolecular() {
 
         <aside className="glass flex flex-col p-3 lg:max-h-[calc(100vh-9rem)]">
           <div className="mb-3 flex gap-1 overflow-x-auto rounded-xl bg-ui-bg/60 p-1" role="tablist">
-            {ABAS.map(([id, rotulo]) => (
+            {ABAS.filter(([id]) => !complexo || (id !== "medidas" && id !== "lipinski")).map(([id, rotulo]) => (
               <button
                 key={id}
                 role="tab"
@@ -528,7 +613,7 @@ export function LaboratorioMolecular() {
                   aba === id ? "bg-chem-primary text-lab-background" : "text-muted hover:text-chem-primary",
                 )}
               >
-                {rotulo}
+                {complexo && id === "ficha" ? "Alvo" : rotulo}
                 {id === "medidas" && medidas.length > 0 && ` · ${medidas.length}`}
                 {id === "lista" && lista.itens.length > 0 && ` · ${lista.itens.length}`}
               </button>
@@ -536,15 +621,28 @@ export function LaboratorioMolecular() {
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-            {mol && aba !== "galeria" && aba !== "lista" && (
+            {mol && !complexo && aba !== "galeria" && aba !== "lista" && (
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-semibold">{mol.nome}</h2>
                 <SeloFonte m={mol} />
               </div>
             )}
 
-            {aba === "ficha" && mol && (
+            {aba === "ficha" && complexo && <PainelComplexo c={complexo} onAbrirFarmaco={() => abrirFarmacoDoComplexo(complexo)} />}
+            {aba === "ficha" && mol && !complexo && (
               <>
+                {noAlvo && (
+                  <button
+                    type="button"
+                    onClick={() => void carregar({ tipo: "pdb", id: noAlvo.id })}
+                    className="mb-3 flex w-full items-center gap-2 rounded-lg border border-chem-orbital/40 bg-chem-orbital/10 px-3 py-2 text-left text-sm hover:border-chem-orbital"
+                  >
+                    <Dna className="h-4 w-4 shrink-0 text-chem-orbital" />
+                    <span>
+                      Ver no alvo biológico: <strong>{noAlvo.alvo}</strong> <span className="font-mono text-xs text-muted">(PDB {noAlvo.id})</span>
+                    </span>
+                  </button>
+                )}
                 <FichaMolecula m={mol} />
                 {smilesAtual && (
                   <button type="button" onClick={() => setEditor(smilesAtual)} className="btn-ghost mt-3 w-full text-sm">
@@ -629,6 +727,30 @@ export function LaboratorioMolecular() {
 
             {aba === "galeria" && (
               <div className="space-y-4">
+                <div>
+                  <p className="mb-1.5 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted">
+                    <Dna className="h-3 w-3 text-chem-orbital" /> Fármaco no alvo (PDB)
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {COMPLEXOS.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          void carregar({ tipo: "pdb", id: c.id });
+                          setAba("ficha");
+                        }}
+                        className={cn(
+                          "rounded-lg border px-2.5 py-2 text-left text-xs transition",
+                          complexo?.id === c.id ? "border-chem-orbital bg-chem-orbital/10" : "border-ui-border/20 hover:border-chem-orbital/60",
+                        )}
+                      >
+                        <span className="block font-semibold leading-tight">{c.farmaco}</span>
+                        <span className="text-[11px] text-muted">{c.alvo}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {(Object.keys(TEMAS_GALERIA) as TemaGaleria[]).map((tema) => (
                   <div key={tema}>
                     <p className="mb-1.5 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted">

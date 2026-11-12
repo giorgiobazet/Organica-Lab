@@ -3,7 +3,12 @@ import type { MoleculaGaleria } from "@/data/galeria";
 import type { DadosCalculados } from "./ocl";
 
 /** Como uma molécula é identificada em links e na Lista da Aula. */
-export type RefMolecula = { tipo: "galeria"; chave: string } | { tipo: "cid"; cid: number } | { tipo: "smiles"; smiles: string };
+export type RefMolecula =
+  | { tipo: "galeria"; chave: string }
+  | { tipo: "cid"; cid: number }
+  | { tipo: "smiles"; smiles: string }
+  /** Complexo fármaco–proteína do PDB (src/data/complexos.ts). */
+  | { tipo: "pdb"; id: string };
 
 /** Molécula aberta no laboratório: o que já se sabe dela e de onde veio cada dado. */
 export interface MoleculaLab {
@@ -29,6 +34,7 @@ export interface MoleculaLab {
 export function refParaTexto(ref: RefMolecula): string {
   if (ref.tipo === "galeria") return `g:${ref.chave}`;
   if (ref.tipo === "cid") return `c:${ref.cid}`;
+  if (ref.tipo === "pdb") return `p:${ref.id}`;
   return `s:${ref.smiles}`;
 }
 
@@ -39,6 +45,7 @@ export function textoParaRef(texto: string): RefMolecula | null {
   if (tipo === "g") return { tipo: "galeria", chave: valor };
   if (tipo === "c" && /^\d+$/.test(valor)) return { tipo: "cid", cid: Number(valor) };
   if (tipo === "s") return { tipo: "smiles", smiles: valor };
+  if (tipo === "p" && /^[0-9A-Za-z]{4}$/.test(valor)) return { tipo: "pdb", id: valor.toUpperCase() };
   return null;
 }
 
