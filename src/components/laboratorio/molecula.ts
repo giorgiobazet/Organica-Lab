@@ -1,5 +1,6 @@
 import type { PubChemProperties } from "@/services/pubchem";
 import type { MoleculaGaleria } from "@/data/galeria";
+import type { DadosCalculados } from "./ocl";
 
 /** Como uma molécula é identificada em links e na Lista da Aula. */
 export type RefMolecula = { tipo: "galeria"; chave: string } | { tipo: "cid"; cid: number } | { tipo: "smiles"; smiles: string };
@@ -18,6 +19,8 @@ export interface MoleculaLab {
   props?: PubChemProperties;
   /** Dados calculados localmente (moléculas da galeria). */
   local?: MoleculaGaleria;
+  /** Dados calculados no navegador (moléculas desenhadas ou SMILES fora do PubChem). */
+  calculado?: DadosCalculados;
   /** Busca no PubChem em andamento. */
   consultando: boolean;
   aviso?: string;

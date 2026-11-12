@@ -6,6 +6,7 @@ import { FONTE_GALERIA } from "@/data/galeria";
 import { pubchemCompoundUrl } from "@/services/pubchem";
 import { cn } from "@/lib/utils";
 import { fmt, formulaSubscrita, type MoleculaLab } from "./molecula";
+import { FONTE_CALCULADO } from "./ocl";
 
 /** Valores exibidos na ficha, com a origem de cada conjunto (PubChem ou cálculo local). */
 export function dadosDaMolecula(m: MoleculaLab) {
@@ -39,8 +40,25 @@ export function dadosDaMolecula(m: MoleculaLab) {
       aceptores: l.aceptoresH,
     };
   }
+  const k = m.calculado;
+  if (k) {
+    return {
+      fonte: "navegador" as const,
+      formula: k.formula,
+      massa: k.massaMolar,
+      iupac: undefined,
+      smiles: m.ref.tipo === "smiles" ? m.ref.smiles : m.smiles2D,
+      logP: k.logP,
+      rotuloLogP: "logP (OpenChemLib)",
+      tpsa: k.tpsa,
+      doadores: k.doadoresH,
+      aceptores: k.aceptoresH,
+    };
+  }
   return null;
 }
+
+const FONTES = { local: FONTE_GALERIA, navegador: FONTE_CALCULADO } as const;
 
 export function SeloFonte({ m }: { m: MoleculaLab }) {
   const d = dadosDaMolecula(m);
@@ -54,6 +72,10 @@ export function SeloFonte({ m }: { m: MoleculaLab }) {
     >
       <Globe2 className="h-3 w-3" /> PubChem CID {m.cid}
     </a>
+  ) : d.fonte === "navegador" ? (
+    <span className="chip bg-chem-success/15 font-mono text-chem-success" title={FONTE_CALCULADO}>
+      <Database className="h-3 w-3" /> calculado no navegador
+    </span>
   ) : (
     <span className="chip bg-chem-orbital/15 font-mono text-chem-orbital" title={FONTE_GALERIA}>
       <Database className="h-3 w-3" /> dados locais (RDKit)
@@ -97,7 +119,7 @@ export function FichaMolecula({ m, compacta = false }: { m: MoleculaLab; compact
       )}
       {d && (
         <p className="font-mono text-[10.5px] leading-relaxed text-muted">
-          Fonte: {d.fonte === "pubchem" ? `PubChem (CID ${m.cid}); XLogP3 e TPSA computados pelo PubChem.` : FONTE_GALERIA}
+          Fonte: {d.fonte === "pubchem" ? `PubChem (CID ${m.cid}); XLogP3 e TPSA computados pelo PubChem.` : FONTES[d.fonte]}
         </p>
       )}
     </div>
@@ -156,7 +178,9 @@ export function PainelLipinski({ m }: { m: MoleculaLab }) {
         Regra: Lipinski et al., Adv. Drug Deliv. Rev. 23 (1997) 3–25. Valores:{" "}
         {d.fonte === "pubchem"
           ? "PubChem (XLogP3; doadores e aceptores de H calculados pelo Cactvs)."
-          : "RDKit (logP de Crippen; doadores = NH + OH e aceptores = N + O, contagem original de Lipinski)."}
+          : d.fonte === "navegador"
+            ? "OpenChemLib, calculado no navegador (logP e contagens de doadores e aceptores de H pelos modelos da biblioteca)."
+            : "RDKit (logP de Crippen; doadores = NH + OH e aceptores = N + O, contagem original de Lipinski)."}
       </p>
     </div>
   );

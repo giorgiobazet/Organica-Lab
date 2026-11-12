@@ -21,6 +21,7 @@ Ferramenta de exploração para aula e estudo (exige login verificado), em `src/
 - Busca por nome em português ou inglês (`src/data/nomesQuimicos.ts` + autocomplete do PubChem), SMILES ou CID; o CID das moléculas da galeria é resolvido pela estrutura (SMILES isomérico), nunca pelo nome.
 - Galeria offline em `src/data/galeria.ts`, gerada por `scripts/build_galeria.py` (RDKit; rótulos R/S conferidos pelo CIP do RDKit). Com o PubChem disponível, ficha, Lipinski e 3D passam aos dados oficiais; cada painel indica a fonte.
 - Medições (distância, ângulo, torção na convenção IUPAC) clicando nos átomos; Modo Projetor; link compartilhável (`?m=g:chave`, `?cid=`, `?smiles=`); Lista da Aula no navegador (`localStorage`) e por link (`?lista=…&t=…`).
+- Editor de desenho (`EditorMolecula.tsx`) com a OpenChemLib (BSD-3, versão fixada), carregada sob demanda por `ocl.ts`: geometria pelo ConformerGenerator + MMFF94s+ e propriedades calculadas no navegador (selo "calculado no navegador"); a estrutura desenhada é procurada no PubChem pelo SMILES isomérico. Os dados da biblioteca vão para `public/ocl/` no `prebuild`/`predev` (`scripts/copiar-recursos-ocl.mjs`, fora do Git).
 - O botão "Abrir no Laboratório" aparece só em visualizadores com CID (visão geral das disciplinas), nunca dentro dos jogos, para não revelar respostas.
 - Mostra 2D e 3D lado a lado por ser ferramenta livre de exploração; a Regra de Ouro 2D vs. 3D vale para os conteúdos das disciplinas.
 

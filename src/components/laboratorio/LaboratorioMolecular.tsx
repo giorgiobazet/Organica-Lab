@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { AtomSpec, GLViewer } from "3dmol";
-import { ArrowLeft, ChevronLeft, ChevronRight, Download, FlaskRound, Link2, Maximize2, Minimize2, Ruler, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, FlaskRound, Link2, Maximize2, Minimize2, PenLine, Ruler, Sparkles, Trash2, X } from "lucide-react";
 import { Molecule3DViewer } from "@/components/Molecule3DViewer";
 import { GALERIA, TEMAS_GALERIA, type TemaGaleria } from "@/data/galeria";
 import { getCachedByCid } from "@/data/molecules3d";
@@ -11,6 +11,8 @@ import { normalizarNome, traduzirNome } from "@/data/nomesQuimicos";
 import { fetchCidByName, fetchCidBySmiles, fetchProperties, fetchSdf3D } from "@/services/pubchem";
 import { cn } from "@/lib/utils";
 import { BuscaMolecula, type EscolhaBusca } from "./BuscaMolecula";
+import { EditorMolecula } from "./EditorMolecula";
+import { gerarMolecula, type MoleculaGerada } from "./ocl";
 import { FichaMolecula, PainelLipinski, SeloFonte, dadosDaMolecula } from "./FichaMolecula";
 import { PainelLista, listaDaUrl, useListaAula } from "./ListaDaAula";
 import {
@@ -45,6 +47,8 @@ export function LaboratorioMolecular() {
   const [selecionados, setSelecionados] = useState<AtomoMedido[]>([]);
   const [medidas, setMedidas] = useState<Medida[]>([]);
   const { lista, setLista, editar } = useListaAula();
+  /** undefined: editor fechado; "": desenho novo; SMILES: editar a molécula atual. */
+  const [editor, setEditor] = useState<string | undefined>(undefined);
   const listaPorLink = useRef(false);
 
   const raiz = useRef<HTMLDivElement>(null);
@@ -78,7 +82,7 @@ export function LaboratorioMolecular() {
         aviso:
           !sdfOk && !c.sdf
             ? "O PubChem não tem modelo 3D deste composto (comum em sais, misturas e moléculas muito grandes). A fórmula 2D e a ficha continuam disponíveis."
-            : !props && !c.local
+            : !props && !c.local && !c.calculado
               ? "PubChem indisponível no momento: tente de novo em instantes."
               : undefined,
       };
@@ -115,16 +119,59 @@ export function LaboratorioMolecular() {
         await enriquecer(id, ref.cid, Boolean(nomePreferido || cache));
         return;
       }
-      setMol({ ref, nome: ref.smiles, smiles2D: ref.smiles, consultando: true });
+      // SMILES (link ou desenho): 3D e dados calculados no navegador; depois, o PubChem se o conhecer.
+      setMol({ ref, nome: nomePreferido ?? "Molécula desenhada", smiles2D: ref.smiles, consultando: true });
       try {
-        const cid = await fetchCidBySmiles(ref.smiles);
-        if (id === pedido.current) await enriquecer(id, cid, false);
+        const g = await gerarMolecula(ref.smiles);
+        if (id !== pedido.current) return;
+        setMol((c) => (c ? { ...c, sdf: g.molfile, origemSdf: undefined, smiles2D: g.smilesKekule, calculado: g.calculado } : c));
+      } catch (e) {
+        if (id === pedido.current)
+          setMol((c) => (c ? { ...c, aviso: e instanceof Error ? e.message : "SMILES inválido: confira a estrutura." } : c));
+      }
+      await identificarNoPubChem(id, ref.smiles, Boolean(nomePreferido));
+    },
+    [avisar, enriquecer], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  /** Procura a estrutura no PubChem; se existir, passa aos dados oficiais. */
+  const identificarNoPubChem = useCallback(
+    async (id: number, smiles: string, manterNome: boolean) => {
+      try {
+        const cid = await fetchCidBySmiles(smiles);
+        if (id === pedido.current) await enriquecer(id, cid, manterNome);
       } catch {
         if (id === pedido.current)
-          setMol((c) => (c ? { ...c, consultando: false, aviso: "Estrutura não encontrada no PubChem. Confira o SMILES (ou tente pelo nome)." } : c));
+          setMol((c) =>
+            c
+              ? {
+                  ...c,
+                  consultando: false,
+                  aviso: c.sdf ? "Estrutura não encontrada no PubChem: 3D e dados calculados no navegador." : c.aviso,
+                }
+              : c,
+          );
       }
     },
-    [avisar, enriquecer],
+    [enriquecer],
+  );
+
+  const aoGerar = useCallback(
+    (g: MoleculaGerada) => {
+      const id = ++pedido.current;
+      setEditor(undefined);
+      setAba("ficha");
+      setMol({
+        ref: { tipo: "smiles", smiles: g.smiles },
+        nome: "Molécula desenhada",
+        sdf: g.molfile,
+        smiles2D: g.smilesKekule,
+        calculado: g.calculado,
+        consultando: true,
+      });
+      void identificarNoPubChem(id, g.smiles, false);
+    },
+    [identificarNoPubChem],
   );
 
   const resolverNome = useCallback(
@@ -335,6 +382,7 @@ export function LaboratorioMolecular() {
 
   // ---------------------------------------------------------------- interface
   const d = mol ? dadosDaMolecula(mol) : null;
+  const smilesAtual = mol ? (mol.ref.tipo === "smiles" ? mol.ref.smiles : (mol.local?.smilesIsomerico ?? d?.smiles)) : undefined;
   const ferramentas = (
     <div className="flex flex-wrap items-center gap-1.5">
       {(["distancia", "angulo", "torcao"] as TipoMedida[]).map((t) => (
@@ -450,10 +498,15 @@ export function LaboratorioMolecular() {
             <FlaskRound className="h-5 w-5 text-chem-primary" /> Laboratório Molecular
           </h1>
         </div>
-        <div className="lg:ml-6 lg:flex-1">
+        <div className="flex items-center gap-2 lg:ml-6 lg:flex-1">
           <BuscaMolecula onEscolher={escolher} ocupado={ocupado || Boolean(mol?.consultando)} />
+          <button type="button" onClick={() => setEditor("")} className="btn-primary shrink-0">
+            <PenLine className="h-4 w-4" /> <span className="hidden sm:inline">Desenhar</span>
+          </button>
         </div>
       </div>
+
+      {editor !== undefined && <EditorMolecula smilesInicial={editor || undefined} onGerado={aoGerar} onFechar={() => setEditor(undefined)} />}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
         <section className="glass flex flex-col gap-3 p-3">
@@ -490,7 +543,16 @@ export function LaboratorioMolecular() {
               </div>
             )}
 
-            {aba === "ficha" && mol && <FichaMolecula m={mol} />}
+            {aba === "ficha" && mol && (
+              <>
+                <FichaMolecula m={mol} />
+                {smilesAtual && (
+                  <button type="button" onClick={() => setEditor(smilesAtual)} className="btn-ghost mt-3 w-full text-sm">
+                    <PenLine className="h-4 w-4" /> Editar esta molécula no desenho
+                  </button>
+                )}
+              </>
+            )}
             {aba === "lipinski" && mol && <PainelLipinski m={mol} />}
 
             {aba === "medidas" && (

@@ -7,3 +7,6 @@ next-env.d.ts
 
 # Cache local do Firebase Hosting
 .firebase/
+
+# Dados da OpenChemLib copiados de node_modules no build
+/public/ocl/
