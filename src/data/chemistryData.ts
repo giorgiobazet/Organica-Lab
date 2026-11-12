@@ -116,6 +116,14 @@ export const DISCIPLINAS: Disciplina[] = [
           "Ordene ácidos e bases pela força e descubra o porquê: hibridização, efeito indutivo (número de halogênios e distância), ressonância e disponibilidade do par de elétrons, com valores de pKa de referência.",
         topicos: ["hibridização", "efeito indutivo", "ressonância", "basicidade de aminas"],
       },
+      {
+        id: "construtor-nomes",
+        titulo: "Construtor de Nomenclatura IUPAC",
+        modo: "2D",
+        descricao:
+          "Monte o nome IUPAC peça por peça (com peças-armadilha): cadeia principal, numeração, locantes, sufixos de grupos característicos e ordem alfabética dos prefixos.",
+        topicos: ["cadeia principal", "menores locantes", "sufixos -ol, -ona, -al, -oico", "ordem alfabética"],
+      },
     ],
     destaque: {
       nome: "Cicloexano",
@@ -167,6 +175,14 @@ export const DISCIPLINAS: Disciplina[] = [
           "Desafio rápido de regiosseletividade (Markovnikov vs. anti-Markovnikov) e estereosseletividade (adição syn vs. anti, abertura de epóxidos em meio ácido vs. básico).",
         topicos: ["Markovnikov", "anti-Markovnikov", "adição syn/anti", "abertura de epóxido"],
       },
+      {
+        id: "diels-alder",
+        titulo: "Diels-Alder em 3D",
+        modo: "2D + 3D",
+        descricao:
+          "Cicloadição [4+2]: produto, dienófilos ativados, conformação s-cis e, em 3D, a conservação da estereoquímica (adução cis) e a regra endo com o ciclopentadieno.",
+        topicos: ["cicloadição [4+2]", "s-cis", "suprafacial", "regra endo"],
+      },
     ],
     destaque: {
       nome: "Benzeno",
@@ -210,6 +226,14 @@ export const DISCIPLINAS: Disciplina[] = [
         descricao:
           "Monte a torre dos derivados de ácido (cloreto de acila → anidrido → éster → amida) e preveja produtos de substituição nucleofílica acílica, da síntese da aspirina à saponificação.",
         topicos: ["grupo de saída", "substituição acílica", "síntese da aspirina", "saponificação", "SOCl₂"],
+      },
+      {
+        id: "lab-carbonilas",
+        titulo: "Laboratório de Carbonilas",
+        modo: "2D",
+        descricao:
+          "Preveja o produto de aldeídos e cetonas com hidretos, Grignard, cianeto, dióis (acetal), ilídeos de Wittig e enolatos (aldólica).",
+        topicos: ["NaBH₄", "Grignard", "cianidrina", "acetal", "Wittig", "aldólica"],
       },
       {
         id: "otimize-farmaco",

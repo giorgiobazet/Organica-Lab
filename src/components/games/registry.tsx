@@ -9,6 +9,9 @@ function Carregando() {
 
 /** Jogos jogáveis, por id (o mesmo id de chemistryData.ts). Carregados sob demanda. */
 export const JOGOS_DISPONIVEIS: Record<string, ComponentType> = {
+  "construtor-nomes": dynamic(() => import("./organica1/ConstrutorNomes"), { ssr: false, loading: Carregando }),
+  "diels-alder": dynamic(() => import("./organica2/DielsAlder"), { ssr: false, loading: Carregando }),
+  "lab-carbonilas": dynamic(() => import("./organica3/LabCarbonilas"), { ssr: false, loading: Carregando }),
   "escada-pka": dynamic(() => import("./organica1/EscadaPka"), { ssr: false, loading: Carregando }),
   "torre-reatividade": dynamic(() => import("./organica3/TorreReatividade"), { ssr: false, loading: Carregando }),
   "otimize-farmaco": dynamic(() => import("./organica3/OtimizeFarmaco"), { ssr: false, loading: Carregando }),

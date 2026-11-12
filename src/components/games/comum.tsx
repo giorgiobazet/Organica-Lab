@@ -184,3 +184,60 @@ export function OrdenarCartas({
     </div>
   );
 }
+
+export interface OpcaoEscolha {
+  texto: string;
+  smiles?: string;
+}
+
+/** Questão de múltipla escolha com opções em bastão 2D; erros ficam marcados, o acerto revela a explicação. */
+export function EscolhaMultipla({
+  id,
+  opcoes,
+  correta,
+  resolvida,
+  explicacao,
+  dicaErro,
+  onAcerto,
+}: {
+  id: string;
+  opcoes: OpcaoEscolha[];
+  correta: number;
+  resolvida: boolean;
+  explicacao: string;
+  dicaErro: string;
+  onAcerto: () => void;
+}) {
+  const [erradas, setErradas] = useState<number[]>([]);
+  useEffect(() => setErradas([]), [id]);
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {opcoes.map((o, k) => {
+          const certa = resolvida && k === correta;
+          const errada = erradas.includes(k);
+          return (
+            <button
+              key={o.texto}
+              type="button"
+              disabled={resolvida}
+              onClick={() => (k === correta ? onAcerto() : setErradas((e) => (e.includes(k) ? e : [...e, k])))}
+              className={cn(
+                "glass-soft flex items-center gap-3 p-3 text-left text-sm transition",
+                certa && "ring-2 ring-chem-success",
+                errada && "opacity-60 ring-2 ring-chem-danger",
+                !resolvida && !errada && "hover:ring-2 hover:ring-chem-primary/60",
+              )}
+            >
+              {o.smiles && <Molecule2DStick smiles={o.smiles} width={130} height={85} explicitHydrogens={false} />}
+              <span className="flex-1 font-semibold">{o.texto}</span>
+              {certa && <CheckCircle2 className="h-5 w-5 text-chem-success" />}
+            </button>
+          );
+        })}
+      </div>
+      {erradas.length > 0 && !resolvida && <p className="text-sm text-chem-danger">{dicaErro}</p>}
+      {resolvida && <p className="rounded-lg bg-chem-success/10 px-3 py-2 text-sm">{explicacao}</p>}
+    </div>
+  );
+}
