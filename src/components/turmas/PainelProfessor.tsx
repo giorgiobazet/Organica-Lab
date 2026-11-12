@@ -397,7 +397,7 @@ function EditorListas({ listas: salvas, onSalvar: salvar }: { listas: ListaTurma
   const adicionar = (e: React.FormEvent) => {
     e.preventDefault();
     const caminho = caminhoLaboratorio(url);
-    if (!caminho) return setErro("Cole o link gerado em Laboratório → Lista da Aula → Copiar link.");
+    if (!caminho) return setErro("Cole o link gerado em Laboratório → Lista da Aula → Link da lista.");
     if (caminho.length > 1800) return setErro("Link longo demais; divida a lista em duas.");
     if (listas.length >= LIMITES.listas) return setErro(`Máximo de ${LIMITES.listas} listas por turma.`);
     setErro(null);

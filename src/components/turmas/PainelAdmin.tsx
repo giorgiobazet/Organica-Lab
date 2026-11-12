@@ -88,7 +88,7 @@ export function PainelAdmin() {
         if (st !== "pendente" && lista.length === 0) return null;
         return (
           <section key={st} className="glass p-5">
-            <h2 className="text-lg font-bold capitalize">
+            <h2 className="text-lg font-bold first-letter:uppercase">
               {ROTULO_STATUS[st]} <span className="font-mono text-sm text-muted">({lista.length})</span>
             </h2>
             {lista.length === 0 ? (
