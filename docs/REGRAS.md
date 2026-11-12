@@ -102,15 +102,15 @@ Tipografia: **Inter** na interface e **JetBrains Mono** em fórmulas, nomes IUPA
 
 - `.github/workflows/deploy.yml`: a cada push na `main`, roda typecheck, build e `checar-build.mjs` e publica no Hosting. Precisa do segredo `FIREBASE_SERVICE_ACCOUNT_CHEMPHARM_HUB` no GitHub; sem ele, só valida o build.
 - Regras do Firestore são publicadas à mão: `npx firebase-tools deploy --only firestore:rules --project chempharm-hub`.
-- App Check (opcional): definir `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` liga o reCAPTCHA Enterprise; antes, incluir os domínios do reCAPTCHA na CSP do `firebase.json`.
+- App Check ativo com Fraud Defense (antigo reCAPTCHA Enterprise; o reCAPTCHA clássico foi descontinuado no Firebase): chave do site em `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` no `.env`, inicializado antes de Auth e Firestore em `src/lib/firebase.ts`. A CSP libera `www.google.com`, `www.gstatic.com` e `content-firebaseappcheck.googleapis.com`. O selo flutuante fica escondido e o aviso do reCAPTCHA está no `<Rodape/>`. Enforce no Firestore e no Authentication só depois de as métricas mostrarem quase tudo "Verificado".
 
 ## Segurança (auditoria de 12/11/2026)
 
 - Sem backend próprio: toda autorização está em `firestore.rules` (negação por padrão, dono por `request.auth.uid`, administrador por `admins/{uid}`, `hasOnly`/`affectedKeys` contra campos extras, tipos e tamanhos validados). Testes no emulador cobrem 63 casos, incluindo IDOR, autoaprovação, XP arbitrário e e-mail falso no cadastro.
 - XP: só cresce e no máximo 1000 por gravação; o `AuthContext` grava o perfil em fila, na ordem. Integridade total do XP exigiria Cloud Functions.
 - `storage.rules` fecha o Storage (o projeto não recebe uploads; o Storage nem está ativado).
-- `.env` versionado contém só a configuração web pública e variáveis vazias (`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`, `NEXT_PUBLIC_FIREBASE_EMULADOR`), para o build eliminar o código de App Check e de emuladores. Modelo em `.env.example`; o `.gitignore` barra JSON de conta de serviço, `.pem` e `.key`.
+- `.env` versionado contém só valores públicos: a configuração web do Firebase, a chave do site do reCAPTCHA e `NEXT_PUBLIC_FIREBASE_EMULADOR` vazia (o build elimina o código dos emuladores). Modelo em `.env.example`; o `.gitignore` barra JSON de conta de serviço, `.pem` e `.key`.
 - `scripts/checar-build.mjs` barra builds com emuladores, chaves privadas ou JSON de conta de serviço.
 - Links de listas da turma só são exibidos se forem internos (`linkListaSeguro`, em `src/lib/turmas.ts`).
 - Cabeçalhos em `firebase.json`: CSP, HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, COOP, CORP e X-Permitted-Cross-Domain-Policies. `'unsafe-inline'` em `script-src` é exigido pelos scripts inline do Next (export estático); não há HTML de usuário renderizado.
-- Console: política de senha forte, proteção contra enumeração de e-mails e domínios autorizados configurados. App Check fica pronto no código; ativar exige a chave do reCAPTCHA Enterprise e os domínios do Google na CSP (ver `.env.example`).
+- Console: política de senha forte, proteção contra enumeração de e-mails e domínios autorizados configurados. App Check ativo (Fraud Defense); falta só o Enforce.
