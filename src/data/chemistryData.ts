@@ -183,6 +183,14 @@ export const DISCIPLINAS: Disciplina[] = [
           "Cicloadição [4+2]: produto, dienófilos ativados, conformação s-cis e, em 3D, a conservação da estereoquímica (adução cis) e a regra endo com o ciclopentadieno.",
         topicos: ["cicloadição [4+2]", "s-cis", "suprafacial", "regra endo"],
       },
+      {
+        id: "aromatico-ou-nao",
+        titulo: "Aromático ou Não?",
+        modo: "2D + 3D",
+        descricao:
+          "Classifique 10 espécies (benzeno, heterociclos, íons tropílio e ciclopentadienila, ciclobutadieno) como aromáticas, antiaromáticas ou não aromáticas pela regra de Hückel; o ciclo-octatetraeno abre em 3D para mostrar a banheira.",
+        topicos: ["regra de Hückel", "4n + 2", "antiaromaticidade", "heterociclos"],
+      },
     ],
     destaque: {
       nome: "Benzeno",
@@ -283,6 +291,22 @@ export const DISCIPLINAS: Disciplina[] = [
         descricao:
           "Leia o espectro de RMN de ¹H (deslocamento, multiplicidade e integração) e escolha, entre isômeros da mesma fórmula, a estrutura da amostra. Cada erro explica o que aquele isômero mostraria.",
         topicos: ["deslocamento químico", "regra n + 1", "integração", "simetria"],
+      },
+      {
+        id: "detetive-iv",
+        titulo: "Detetive do IV",
+        modo: "2D",
+        descricao:
+          "Espectros reais de infravermelho (NIST): identifique o grupo funcional de cada amostra pelas bandas de C=O, O–H, N–H e C–O. Cada erro mostra a assinatura que aquele grupo teria.",
+        topicos: ["C=O", "O–H", "N–H", "conjugação"],
+      },
+      {
+        id: "detetive-massas",
+        titulo: "Detetive de Massas",
+        modo: "2D",
+        descricao:
+          "Espectros reais de massas (NIST): ache o íon molecular e explique o pico base (clivagem α, acílio, perda de radicais, padrão isotópico do cloro).",
+        topicos: ["íon molecular", "pico base", "clivagem α", "M + 2"],
       },
     ],
     destaque: {
