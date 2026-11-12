@@ -79,3 +79,24 @@ export async function gerarMolecula(entrada: Molecule | string): Promise<Molecul
   new OCL.ForceFieldMMFF94(conf, OCL.ForceFieldMMFF94.MMFF94SPLUS, {}).minimise({ maxIts: 4000 });
   return { smiles, smilesKekule, molfile: `${conf.toMolfile()}$$$$\n`, calculado };
 }
+
+export interface AvaliacaoLipinski extends DadosCalculados {
+  violacoes: number;
+  temFarmacoforo: boolean;
+  fragmentos: number;
+  smiles: string;
+}
+
+/** Lipinski + presença do farmacóforo (busca de subestrutura) para a molécula do editor. */
+export async function avaliarLipinski(mol: Molecule, farmacoforoSmiles: string): Promise<AvaliacaoLipinski> {
+  const OCL = await carregarOCL();
+  const m = mol.getCompactCopy();
+  const dados = propriedades(OCL, m);
+  const violacoes = [dados.massaMolar > 500, dados.logP > 5, dados.doadoresH > 5, dados.aceptoresH > 10].filter(Boolean).length;
+  const frag = OCL.Molecule.fromSmiles(farmacoforoSmiles);
+  frag.setFragment(true);
+  const busca = new OCL.SSSearcher();
+  busca.setFragment(frag);
+  busca.setMolecule(m);
+  return { ...dados, violacoes, temFarmacoforo: busca.isFragmentInMolecule(), fragmentos: m.getAllAtoms() ? m.getFragments().length : 0, smiles: m.toIsomericSmiles() };
+}

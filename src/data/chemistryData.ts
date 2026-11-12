@@ -108,6 +108,14 @@ export const DISCIPLINAS: Disciplina[] = [
           "Analise substrato, nucleófilo/base, grupo abandonador e solvente para prever o mecanismo dominante; veja o ataque dorsal a 180° com inversão de Walden (SN2) ou o carbocátion trigonal planar (SN1).",
         topicos: ["SN1", "SN2", "E1", "E2", "ácido-base"],
       },
+      {
+        id: "escada-pka",
+        titulo: "Escada de pKa",
+        modo: "2D",
+        descricao:
+          "Ordene ácidos e bases pela força e descubra o porquê: hibridização, efeito indutivo (número de halogênios e distância), ressonância e disponibilidade do par de elétrons, com valores de pKa de referência.",
+        topicos: ["hibridização", "efeito indutivo", "ressonância", "basicidade de aminas"],
+      },
     ],
     destaque: {
       nome: "Cicloexano",
@@ -195,6 +203,22 @@ export const DISCIPLINAS: Disciplina[] = [
           "Fase 1: molécula-alvo em bastão 2D. Fase 2: aplique grupos de proteção (acetal cíclico, TBDMS) e corte a ligação estratégica. Fase 3: os synthons (δ⁺/δ⁻) e seus equivalentes sintéticos abrem em 3D para escolher os reagentes da síntese direta.",
         topicos: ["benzocaína", "paracetamol", "chalcona", "β-hidroxicetona aldólica", "β-cetoéster de Claisen", "dipeptídeo"],
       },
+      {
+        id: "torre-reatividade",
+        titulo: "Torre de Reatividade",
+        modo: "2D",
+        descricao:
+          "Monte a torre dos derivados de ácido (cloreto de acila → anidrido → éster → amida) e preveja produtos de substituição nucleofílica acílica, da síntese da aspirina à saponificação.",
+        topicos: ["grupo de saída", "substituição acílica", "síntese da aspirina", "saponificação", "SOCl₂"],
+      },
+      {
+        id: "otimize-farmaco",
+        titulo: "Otimize o Fármaco",
+        modo: "2D",
+        descricao:
+          "Química medicinal: edite compostos-modelo que violam a Regra dos 5 de Lipinski até virarem candidatos orais, sem perder o farmacóforo. As propriedades são recalculadas a cada mudança no desenho.",
+        topicos: ["Regra de Lipinski", "logP", "doadores e aceptores de H", "farmacóforo"],
+      },
     ],
     destaque: {
       nome: "Benzocaína",
@@ -227,6 +251,14 @@ export const DISCIPLINAS: Disciplina[] = [
         descricao:
           "Resolva casos com amostras desconhecidas usando testes clássicos (2,4-DNPH, Tollens, Lucas, NaHCO₃, Beilstein/AgNO₃) e a central espectrométrica (IV, EM, RMN ¹H e ¹³C) até montar a fórmula em bastão da substância.",
         topicos: ["acetofenona", "butanona", "acetato de etila", "ácido propanoico", "p-cloroanilina", "etanol"],
+      },
+      {
+        id: "quebra-cabeca-rmn",
+        titulo: "Quebra-cabeça de RMN",
+        modo: "2D",
+        descricao:
+          "Leia o espectro de RMN de ¹H (deslocamento, multiplicidade e integração) e escolha, entre isômeros da mesma fórmula, a estrutura da amostra. Cada erro explica o que aquele isômero mostraria.",
+        topicos: ["deslocamento químico", "regra n + 1", "integração", "simetria"],
       },
     ],
     destaque: {
