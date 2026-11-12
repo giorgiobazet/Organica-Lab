@@ -13,3 +13,12 @@ next-env.d.ts
 
 # Emuladores do Firebase
 *-debug.log
+
+# Credenciais que nunca devem ir para o Git (a configuração web pública fica em .env)
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+*.pem
+*.key
+*.p12
+firebase-debug.log
+.DS_Store

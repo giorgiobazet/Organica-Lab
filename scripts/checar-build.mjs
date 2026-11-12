@@ -34,4 +34,17 @@ if (faltando.length) {
   process.exit(1);
 }
 
+// Nada de emuladores locais nem credenciais administrativas no site publicado.
+const proibidos = [
+  [/127\.0\.0\.1:(9099|8080)/, "conexão com os emuladores locais (NEXT_PUBLIC_FIREBASE_EMULADOR)"],
+  [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, "chave privada"],
+  [/"type"\s*:\s*"service_account"/, "JSON de conta de serviço do Firebase Admin"],
+];
+for (const [re, nome] of proibidos) {
+  if (re.test(conteudo)) {
+    console.error(`✗ O build contém ${nome}. Não publique.`);
+    process.exit(1);
+  }
+}
+
 console.log("✓ Build com a configuração do Firebase: pode publicar.");

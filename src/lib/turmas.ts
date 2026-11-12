@@ -79,6 +79,11 @@ export const LIMITES = { nomeTurma: 80, tarefas: 60, listas: 30, turmasPorAluno:
 const ALFABETO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 export const REGEX_CODIGO = /^[A-HJKMNP-Z2-9]{6}$/;
 
+/** Só links internos do Laboratório (evita javascript: e sites externos nas listas da turma). */
+export function linkListaSeguro(url: unknown): string | null {
+  return typeof url === "string" && url.length <= 1800 && /^\/laboratorio\?[^\s"'<>]*$/.test(url) ? url : null;
+}
+
 export function normalizarCodigo(c: string) {
   return c.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
 }

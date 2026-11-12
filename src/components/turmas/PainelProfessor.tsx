@@ -30,6 +30,7 @@ import {
   cancelarPedido,
   criarTurma,
   excluirTurma,
+  linkListaSeguro,
   membrosDaTurma,
   pedirValidacao,
   removerMembro,
@@ -422,7 +423,7 @@ function EditorListas({ listas: salvas, onSalvar: salvar }: { listas: ListaTurma
         {listas.map((l, i) => (
           <li key={`${l.url}-${i}`} className="flex items-center gap-2 rounded-lg bg-ui-border/10 px-3 py-2 text-sm">
             <ListOrdered className="h-4 w-4 shrink-0 text-chem-primary" />
-            <a href={l.url} target="_blank" rel="noopener" className="flex-1 truncate hover:text-chem-primary">{l.titulo}</a>
+            <a href={linkListaSeguro(l.url) ?? "#"} target="_blank" rel="noopener noreferrer" className="flex-1 truncate hover:text-chem-primary">{l.titulo}</a>
             <button onClick={() => onSalvar(listas.filter((_, j) => j !== i))} className="text-muted hover:text-chem-danger" aria-label={`Remover ${l.titulo}`}>
               <X className="h-4 w-4" />
             </button>

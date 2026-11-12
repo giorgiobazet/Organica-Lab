@@ -8,6 +8,7 @@ import {
   REGEX_CODIGO,
   TurmaErro,
   concluidosDoPerfil,
+  linkListaSeguro,
   entrarNaTurma,
   normalizarCodigo,
   sairDaTurma,
@@ -142,7 +143,7 @@ export function MinhasTurmas() {
                   <>
                     <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-muted">Listas da aula</p>
                     <ul className="mt-1.5 space-y-1">
-                      {t.listas.map((l) => (
+                      {t.listas.map((l) => ({ titulo: l.titulo, url: linkListaSeguro(l.url) })).filter((l): l is { titulo: string; url: string } => l.url !== null).map((l) => (
                         <li key={l.url}>
                           <a href={l.url} className="flex items-center gap-2 text-sm hover:text-chem-primary">
                             <ListOrdered className="h-4 w-4 shrink-0 text-chem-primary" /> {l.titulo}

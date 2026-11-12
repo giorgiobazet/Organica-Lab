@@ -192,7 +192,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const next = { ...atual, ...patch };
       profileRef.current = next;
       setProfile(next);
-      const escrita = backend.updateProfile(user.uid, patch);
+      // Gravações em fila, na ordem: as regras recusam XP menor que o já salvo.
+      const uidAtual = user.uid;
+      const escrita = ultimaEscrita.current.then(() => backend.updateProfile(uidAtual, patch));
       ultimaEscrita.current = escrita.catch(() => undefined);
       await escrita;
       // Espelha XP e jogos concluídos nas turmas do aluno, agrupando atualizações seguidas.

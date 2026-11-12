@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// O OrgânicaLab não recebe uploads de usuários: todo arquivo (moléculas, complexos do PDB,
+// pôsteres) é estático, servido pelo Hosting. Por isso o Storage fica fechado.
+// Se um dia houver upload (ex.: foto de perfil), libere só o necessário, por exemplo:
+//
+//   match /usuarios/{uid}/avatar.webp {
+//     allow read: if request.auth != null;
+//     allow write: if request.auth != null && request.auth.uid == uid
+//       && request.auth.token.email_verified == true
+//       && request.resource.size < 2 * 1024 * 1024
+//       && request.resource.contentType.matches('image/(webp|png|jpeg)');
+//   }
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

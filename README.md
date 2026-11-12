@@ -16,7 +16,7 @@ Sem configurar nada, o app entra em **Modo Dev**: cadastro, login e verificaçã
 ## Firebase (produção)
 
 1. Crie um projeto no [console do Firebase](https://console.firebase.google.com), ative **Authentication → E-mail/senha** e o **Firestore**.
-2. Copie `.env.local.example` para `.env.local` e preencha as chaves `NEXT_PUBLIC_FIREBASE_*`.
+2. O `.env` já traz a configuração web pública do Firebase. Para o Modo Dev, copie `.env.example` para `.env.local` com as variáveis vazias.
 3. Publique as regras de `firestore.rules` (cada aluno lê e escreve só o próprio perfil; XP e progresso exigem e-mail verificado).
 4. Reinicie `npm run dev`. O selo "Modo Dev" some do cabeçalho.
 
