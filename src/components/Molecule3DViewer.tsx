@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { GLViewer } from "3dmol";
-import { Atom, Box, CircleDot, Cloud, Database, Globe2, Pause, Play, RotateCcw } from "lucide-react";
+import Link from "next/link";
+import { Atom, Box, CircleDot, Cloud, Database, FlaskRound, Globe2, Pause, Play, RotateCcw } from "lucide-react";
 import { fetchSdf3D, pubchemCompoundUrl } from "@/services/pubchem";
 import { MOLECULES_3D, getCachedByCid } from "@/data/molecules3d";
 import { cn } from "@/lib/utils";
@@ -67,6 +68,12 @@ export interface Molecule3DViewerProps {
   esferas?: ShapeSphere[];
   /** Chamado sempre que uma molécula termina de ser desenhada (ex.: para trocar um pôster pelo 3D). */
   onCarregado?: () => void;
+  /** De onde veio o `sdf` explícito (muda o selo de fonte; o padrão é "geometria calculada"). */
+  origemSdf?: { tipo: "pubchem"; cid: number } | { tipo: "local" };
+  /** Desenhos extras (ex.: medições) refeitos a cada troca de estilo, antes da renderização. */
+  desenharExtras?: (viewer: GLViewer) => void;
+  /** Botão "Abrir no Laboratório" quando há um CID (padrão: true). */
+  linkLaboratorio?: boolean;
 }
 
 type Source =
@@ -85,6 +92,7 @@ function applyStyle(
   highlight: AtomHighlight[] = [],
   labels: AtomLabel[] = [],
   esferas: ShapeSphere[] = [],
+  extras?: (viewer: GLViewer) => void,
 ) {
   viewer.removeAllSurfaces();
   if (style === "ballAndStick") {
@@ -131,6 +139,7 @@ function applyStyle(
       alignment: "bottomCenter",
     });
   }
+  extras?.(viewer);
   if (surface === "vdw") {
     // Nuvem eletrônica em violeta neon (chem.orbital).
     // 3Dmol: SurfaceType.VDW = 1
@@ -156,6 +165,9 @@ export function Molecule3DViewer({
   labels,
   esferas,
   onCarregado,
+  origemSdf,
+  desenharExtras,
+  linkLaboratorio = true,
 }: Molecule3DViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<GLViewer | null>(null);
@@ -178,6 +190,10 @@ export function Molecule3DViewer({
   esferasRef.current = esferas;
   const onCarregadoRef = useRef(onCarregado);
   onCarregadoRef.current = onCarregado;
+  const extrasRef = useRef(desenharExtras);
+  extrasRef.current = desenharExtras;
+  const origemRef = useRef(origemSdf);
+  origemRef.current = origemSdf;
   const highlightKey = JSON.stringify([highlight ?? [], labels ?? [], esferas ?? []]);
 
   // Cria o viewer uma única vez (3Dmol depende de window/WebGL: só no cliente).
@@ -231,7 +247,7 @@ export function Molecule3DViewer({
       const view = keepView ? viewer.getView() : null;
       viewer.removeAllModels();
       viewer.addModel(data, "sdf");
-      applyStyle(viewer, style, surface, highlightRef.current, labelsRef.current, esferasRef.current);
+      applyStyle(viewer, style, surface, highlightRef.current, labelsRef.current, esferasRef.current, extrasRef.current);
       if (view) {
         viewer.setView(view);
       } else {
@@ -246,7 +262,8 @@ export function Molecule3DViewer({
     };
 
     if (sdf) {
-      show(sdf, { kind: "inline" });
+      const o = origemRef.current;
+      show(sdf, o ? (o.tipo === "pubchem" ? { kind: "pubchem", cid: o.cid } : { kind: "cache", nome: "" }) : { kind: "inline" });
       setLoading(false);
       return;
     }
@@ -275,7 +292,7 @@ export function Molecule3DViewer({
   }, [ready, cid, cacheKey, sdf]);
 
   useEffect(() => {
-    if (ready && viewerRef.current) applyStyle(viewerRef.current, style, surface, highlightRef.current, labelsRef.current, esferasRef.current);
+    if (ready && viewerRef.current) applyStyle(viewerRef.current, style, surface, highlightRef.current, labelsRef.current, esferasRef.current, extrasRef.current);
   }, [ready, style, surface, highlightKey]);
 
   useEffect(() => {
@@ -329,6 +346,16 @@ export function Molecule3DViewer({
             </>
           )}
         </div>
+      )}
+
+      {linkLaboratorio && !loading && !error && (cid ?? (source.kind === "pubchem" ? source.cid : undefined)) && (
+        <Link
+          href={`/laboratorio?cid=${cid ?? (source.kind === "pubchem" ? source.cid : "")}`}
+          className="absolute left-3 top-3 flex items-center gap-1.5 rounded-md bg-ui-surface/80 px-2 py-1 text-[11px] font-semibold text-chem-primary hover:bg-chem-primary/15"
+          title="Explorar esta molécula no Laboratório Molecular"
+        >
+          <FlaskRound className="h-3 w-3" /> Abrir no Laboratório
+        </Link>
       )}
 
       {showControls && (

@@ -11,6 +11,8 @@ const TIMEOUT_MS = 8000;
 
 export interface PubChemProperties {
   CID: number;
+  /** Nome comum do composto no PubChem (ex.: "Aspirin"). */
+  Title?: string;
   MolecularFormula: string;
   MolecularWeight: string;
   IUPACName?: string;
@@ -60,6 +62,7 @@ export function fetchProperties(cid: number): Promise<PubChemProperties> {
   const cached = propCache.get(cid);
   if (cached) return cached;
   const fields = [
+    "Title",
     "MolecularFormula",
     "MolecularWeight",
     "IUPACName",
@@ -90,6 +93,38 @@ export async function fetchCidByName(name: string): Promise<number> {
   const cid = json.IdentifierList?.CID?.[0];
   if (!cid) throw new Error(`Nenhum CID para "${name}"`);
   return cid;
+}
+
+/** Sugestões de nomes do PubChem enquanto o usuário digita (inglês). */
+export async function fetchAutocomplete(texto: string, limite = 8): Promise<string[]> {
+  const q = texto.trim();
+  if (q.length < 2) return [];
+  const res = await fetchWithTimeout(
+    `https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(q)}/json?limit=${limite}`,
+  );
+  const json = (await res.json()) as { dictionary_terms?: { compound?: string[] } };
+  return json.dictionary_terms?.compound ?? [];
+}
+
+/** CID pela estrutura (SMILES isomérico): identifica o estereoisômero certo, ao contrário do nome. */
+export async function fetchCidBySmiles(smiles: string): Promise<number> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    // POST: SMILES com "/", "#" ou "\\" não cabem com segurança no caminho da URL.
+    const res = await fetch(`${BASE}/compound/smiles/cids/JSON`, {
+      method: "POST",
+      body: new URLSearchParams({ smiles }),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(`PubChem respondeu ${res.status} para o SMILES ${smiles}`);
+    const json = (await res.json()) as { IdentifierList?: { CID?: number[] } };
+    const cid = json.IdentifierList?.CID?.[0];
+    if (!cid) throw new Error(`Nenhum composto no PubChem para o SMILES ${smiles}`);
+    return cid;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function pubchemCompoundUrl(cid: number): string {

@@ -7,6 +7,7 @@ import { Box, FlaskConical, Loader2, Moon, Sun } from "lucide-react";
 import { Molecule3DViewer } from "@/components/Molecule3DViewer";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { VerifyEmailGate } from "@/components/auth/VerifyEmailGate";
+import { destinoAposLogin } from "@/components/RequireVerified";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { BotaoModoLeve } from "@/components/BotaoModoLeve";
@@ -45,7 +46,7 @@ export default function Home() {
   const mol = MOLECULES_3D[atual.key];
 
   useEffect(() => {
-    if (status === "verified") router.replace("/hub");
+    if (status === "verified") router.replace(destinoAposLogin());
   }, [status, router]);
 
   useEffect(() => {
@@ -98,7 +99,13 @@ export default function Home() {
           </div>
           {ativar3D ? (
             <div className={cn("absolute inset-0 transition-opacity duration-500", pronto3D === atual.key ? "opacity-100" : "opacity-0")}>
-              <Molecule3DViewer cid={atual.cid} cacheKey={atual.key} className="absolute inset-0" onCarregado={() => setPronto3D(atual.key)} />
+              <Molecule3DViewer
+                cid={atual.cid}
+                cacheKey={atual.key}
+                className="absolute inset-0"
+                linkLaboratorio={false}
+                onCarregado={() => setPronto3D(atual.key)}
+              />
             </div>
           ) : (
             leve && (

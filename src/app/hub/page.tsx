@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { m } from "framer-motion";
-import { ArrowRight, ArrowUpRight, Gamepad2, History, Sparkles, Trophy, Zap } from "lucide-react";
+import { ArrowRight, ArrowUpRight, FlaskRound, Gamepad2, History, ListOrdered, Ruler, Sparkles, Trophy, Zap } from "lucide-react";
 import { LabHeader } from "@/components/LabHeader";
 import { Molecule2DStick } from "@/components/Molecule2DStick";
 import { RequireVerified } from "@/components/RequireVerified";
@@ -82,6 +82,30 @@ function HubContent() {
           </div>
         </div>
       </m.section>
+
+      {/* Ferramenta de aula: Laboratório Molecular */}
+      <Link
+        href="/laboratorio"
+        className="glass group mt-6 flex flex-col gap-4 p-5 transition hover:border-chem-primary/60 sm:flex-row sm:items-center"
+      >
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-chem-primary/15 text-chem-primary">
+          <FlaskRound className="h-6 w-6" />
+        </div>
+        <div className="flex-1">
+          <p className="flex flex-wrap items-center gap-2 text-lg font-bold">
+            Laboratório Molecular <span className="chip bg-chem-orbital/15 text-chem-orbital">para aulas e estudo</span>
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            Busque qualquer composto do PubChem, veja em 2D e 3D, meça ângulos e distâncias, confira a Regra de Lipinski
+            e monte a Lista da Aula para projetar.
+          </p>
+        </div>
+        <div className="flex gap-2 text-xs text-muted">
+          <span className="chip bg-ui-border/10"><Ruler className="h-3 w-3" /> medições</span>
+          <span className="chip bg-ui-border/10"><ListOrdered className="h-3 w-3" /> lista da aula</span>
+        </div>
+        <ArrowRight className="hidden h-5 w-5 text-chem-primary transition group-hover:translate-x-1 sm:block" />
+      </Link>
 
       {/* Bento grid das 4 disciplinas */}
       <section className="mt-10">
