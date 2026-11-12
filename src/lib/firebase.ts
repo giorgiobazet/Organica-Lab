@@ -8,6 +8,7 @@
  *    após a instalação.
  */
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import {
   getAuth,
   onAuthStateChanged,
@@ -169,6 +170,16 @@ class FirebaseBackend implements AuthBackend {
 
   constructor() {
     this.app = getApps()[0] ?? initializeApp(firebaseConfig);
+    // App Check (Fraud Defense, antigo reCAPTCHA Enterprise): antes de Auth e Firestore, para que todas as requisições levem o
+    // token que prova que vêm do site oficial. Liga quando a chave do site está no .env.
+    const chaveRecaptcha = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (chaveRecaptcha && process.env.NEXT_PUBLIC_FIREBASE_EMULADOR !== "1") {
+      try {
+        initializeAppCheck(this.app, { provider: new ReCaptchaEnterpriseProvider(chaveRecaptcha), isTokenAutoRefreshEnabled: true });
+      } catch {
+        /* já inicializado (recarga rápida em desenvolvimento) */
+      }
+    }
     this.auth = getAuth(this.app);
     // E-mails de verificação e redefinição em português.
     this.auth.languageCode = "pt-BR";
@@ -177,13 +188,6 @@ class FirebaseBackend implements AuthBackend {
     if (process.env.NEXT_PUBLIC_FIREBASE_EMULADOR === "1") {
       connectAuthEmulator(this.auth, "http://127.0.0.1:9099", { disableWarnings: true });
       connectFirestoreEmulator(this.db, "127.0.0.1", 8080);
-    }
-    // App Check (reCAPTCHA Enterprise): liga quando a chave do site for configurada no .env.
-    const chaveRecaptcha = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    if (chaveRecaptcha) {
-      void import("firebase/app-check").then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) =>
-        initializeAppCheck(this.app, { provider: new ReCaptchaEnterpriseProvider(chaveRecaptcha), isTokenAutoRefreshEnabled: true }),
-      );
     }
   }
 

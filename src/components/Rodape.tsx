@@ -22,6 +22,17 @@ export function Rodape({ className }: { className?: string }) {
           Privacidade e dados
         </a>
       </p>
+      <p className="mt-2 text-[10px] opacity-70">
+        Protegido pelo reCAPTCHA: valem a{" "}
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
+          Política de Privacidade
+        </a>{" "}
+        e os{" "}
+        <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
+          Termos de Serviço
+        </a>{" "}
+        do Google.
+      </p>
     </footer>
   );
 }

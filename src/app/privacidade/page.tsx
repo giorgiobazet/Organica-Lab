@@ -75,6 +75,14 @@ export default function PrivacidadePage() {
               jogos concluídos. Você pode sair da turma quando quiser.
             </li>
             <li>
+              <b>Google reCAPTCHA</b> (via Firebase App Check): verifica que o acesso vem do site oficial e não de
+              robôs, analisando dados técnicos do navegador, conforme a{" "}
+              <a className="font-semibold text-chem-primary hover:underline" href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
+                política do Google
+              </a>
+              .
+            </li>
+            <li>
               <b>PubChem (NIH) e RCSB PDB:</b> recebem apenas os nomes ou estruturas de moléculas que você busca no
               Laboratório, sem nenhum dado pessoal.
             </li>
